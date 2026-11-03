@@ -40,10 +40,12 @@
   .secrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 2px; border-top:1px dashed rgba(29,36,51,.2); }
   .secrow label{ font-size:.95rem; }
   .secrow .cap{ font-size:.72rem; color:var(--faint); }
-  .stepper{ display:flex; align-items:center; gap:6px; }
-  .stepper button{ width:30px; height:30px; border-radius:8px; border:1.5px solid var(--ink); background:#fff; font:inherit; font-weight:700; cursor:pointer; line-height:1; }
-  .stepper button:hover{ background:var(--accent-soft); }
-  .stepper input{ width:52px; text-align:center; font:inherit; font-weight:700; padding:5px 4px; border:1.5px solid rgba(29,36,51,.35); border-radius:8px; background:#fff; }
+  .stepper{ display:none; }
+  .secname{ flex:1 1 auto; min-width:150px; }
+  .ctrl{ display:flex; align-items:center; gap:8px; }
+  .ctrl input[type="range"]{ accent-color:var(--accent); width:150px; cursor:pointer; }
+  .ctrl input[type="number"]{ width:64px; text-align:center; font:inherit; font-weight:700; padding:5px 4px; border:1.5px solid rgba(29,36,51,.35); border-radius:8px; background:#fff; }
+  @media (max-width:460px){ .secrow{ flex-wrap:wrap; } .ctrl{ width:100%; justify-content:space-between; } .ctrl input[type="range"]{ flex:1; min-width:100px; } }
   .totalbar{ display:flex; justify-content:space-between; align-items:center; padding:14px 2px 2px; font-size:.95rem; }
   .totalbar b{ font-variant-numeric:tabular-nums; }
   .btn-start{ width:100%; margin-top:12px; font:inherit; font-weight:700; font-size:1rem; color:var(--paper); background:var(--ink); border:none; border-radius:10px; padding:14px; cursor:pointer; transition:transform .15s, background .15s; }
@@ -113,9 +115,11 @@
       <h2 id="suTitle">Atur sesi latihan</h2>
       <p class="desc" id="suDesc"></p>
       <div class="presets">
-        <button onclick="preset(3)" id="p3"></button>
-        <button onclick="preset(15)" id="pMax"></button>
-        <button onclick="preset(0)" id="p0"></button>
+        <button onclick="preset(5)">5</button>
+        <button onclick="preset(10)">10</button>
+        <button onclick="preset(25)">25</button>
+        <button onclick="preset(100)">100</button>
+        <button onclick="preset(0)" id="pC"></button>
       </div>
       <div id="secList"></div>
       <div class="totalbar"><span id="lblTotal"></span><b id="totalNum">0</b></div>
@@ -163,7 +167,7 @@
    Topics: selang, pertidaksamaan, nilai mutlak, fungsi, limit,
    kekontinuan, turunan · no repeats (in-session + cross-session)
    ============================================================ */
-const MAXN = 15;
+const MAXN = 100;
 const TOPICS = [
  {v:'selang', id:'Selang', en:'Intervals'},
  {v:'pertidaksamaan', id:'Pertidaksamaan', en:'Inequalities'},
@@ -175,15 +179,15 @@ const TOPICS = [
 ];
 const UI = {
  id:{sub:'BBK1CAB3 — Latihan soal acak dengan penjelasan', suTitle:'Atur sesi latihan',
-     suDesc:'Pilih jumlah soal per topik. Soal dibuat otomatis dan tidak berulang: soal yang sudah pernah muncul (bahkan dari sesi sebelumnya) dihindari mesin soal.',
-     p3:'3 per topik', pMax:'15 per topik', p0:'Kosongkan', total:'Total soal', start:'Mulai Sesi',
+     suDesc:'Atur jumlah soal per topik (maks 100). Soal dibuat otomatis dan tidak berulang: soal yang pernah muncul — bahkan dari sesi sebelumnya — dihindari mesin soal.',
+     pC:'Kosongkan', total:'Total soal', start:'Mulai Sesi',
      next:'Soal Berikutnya', skip:'Lewati', end:'Akhiri sesi', hint:'Tips: tekan 1–4 untuk memilih jawaban, N untuk lanjut.',
      qof:'Soal', of:'dari', score:'Skor',
      enTitle:'Sesi selesai!', enSub:'Bagus — lihat ringkasan per topik di bawah.', enScoreLbl:'benar', enAccLbl:'akurasi',
      enDetail:'dijawab', again:'Ulangi sesi ini', toSetup:'Ubah pengaturan'},
  en:{sub:'BBK1CAB3 — Random practice questions with explanations', suTitle:'Set up your practice session',
-     suDesc:'Pick how many questions per topic. Questions are generated on the fly and never repeat: the engine avoids anything you have already seen, even from previous sessions.',
-     p3:'3 per topic', pMax:'15 per topic', p0:'Clear', total:'Total questions', start:'Start Session',
+     suDesc:'Set questions per topic (max 100). Questions are generated on the fly and never repeat — the engine avoids anything you have already seen, even from previous sessions.',
+     pC:'Clear', total:'Total questions', start:'Start Session',
      next:'Next question', skip:'Skip', end:'End session', hint:'Tip: press 1–4 to pick an answer, N to move on.',
      qof:'Question', of:'of', score:'Score',
      enTitle:'Session complete!', enSub:'Well done — see the breakdown per topic below.', enScoreLbl:'correct', enAccLbl:'accuracy',
@@ -615,6 +619,7 @@ const generators = {
 let state = { lang: localStorage.getItem('fc_lang') || 'id' };
 let session = null;
 const counts = JSON.parse(localStorage.getItem('mat_counts') || '{}');
+if(Object.keys(counts).length===0){ TOPICS.forEach(w=>{ counts[w.v]=5; }); }
 let seenArr = JSON.parse(localStorage.getItem('mat_seen') || '[]');
 const seenSet = new Set(seenArr);
 
@@ -626,9 +631,7 @@ function openSetup(){ buildSetup(); show('viewSetup'); }
 function buildSetup(){
   document.getElementById('suTitle').textContent = UI[state.lang].suTitle;
   document.getElementById('suDesc').textContent = UI[state.lang].suDesc;
-  document.getElementById('p3').textContent = UI[state.lang].p3;
-  document.getElementById('pMax').textContent = UI[state.lang].pMax;
-  document.getElementById('p0').textContent = UI[state.lang].p0;
+  document.getElementById('pC').textContent = UI[state.lang].pC;
   document.getElementById('lblTotal').textContent = UI[state.lang].total;
   document.getElementById('btnStart').textContent = UI[state.lang].start;
   const list = document.getElementById('secList');
@@ -636,29 +639,33 @@ function buildSetup(){
   TOPICS.forEach(w=>{
     const row = document.createElement('div'); row.className = 'secrow';
     const name = state.lang==='id' ? w.id : w.en;
-    row.innerHTML = `<div><label>${name}</label><div class="cap">max ${MAXN}</div></div>
-      <div class="stepper">
-        <button aria-label="-" onclick="bump('${w.v}',-1)">−</button>
-        <input id="cnt_${w.v}" type="number" min="0" max="${MAXN}" value="${counts[w.v] ?? 3}" onchange="setCount('${w.v}', this)">
-        <button aria-label="+" onclick="bump('${w.v}',1)">+</button>
+    const capn = state.lang==='id' ? `otomatis · max ${MAXN}` : `auto-generated · max ${MAXN}`;
+    row.innerHTML = `<div class="secname"><label>${name}</label><div class="cap" id="cap_${w.v}">${capn}</div></div>
+      <div class="ctrl">
+        <input id="rng_${w.v}" type="range" min="0" max="${MAXN}" value="${dflt(w.v)}" oninput="onRange('${w.v}', this.value)">
+        <input id="cnt_${w.v}" type="number" min="0" max="${MAXN}" value="${dflt(w.v)}" onchange="onNum('${w.v}', this)">
       </div>`;
     list.appendChild(row);
   });
   updateTotal();
 }
-function readCount(v){ const el = document.getElementById('cnt_'+v); const n = Math.max(0, Math.min(MAXN, parseInt(el.value,10)||0)); el.value = n; counts[v] = n; }
-function bump(v,d){ readCount(v); counts[v] = Math.max(0, Math.min(MAXN, (counts[v]||0)+d)); document.getElementById('cnt_'+v).value = counts[v]; saveCounts(); updateTotal(); }
-function setCount(v, el){ readCount(v); saveCounts(); updateTotal(); }
+function dflt(v){ return Math.max(0, Math.min(MAXN, counts[v] ?? 5)); }
+function dflt0(x){ const n = parseInt(x,10); return isNaN(n) ? 0 : Math.max(0, Math.min(MAXN, n)); }
+function syncInputs(v){ const r = document.getElementById('rng_'+v), c = document.getElementById('cnt_'+v); if(r){ r.value = counts[v]; c.value = counts[v]; } }
+function onRange(v, raw){ counts[v] = dflt0(raw); syncInputs(v); saveCounts(); updateTotal(); }
+function onNum(v, el){ counts[v] = dflt0(el.value); syncInputs(v); saveCounts(); updateTotal(); }
 function saveCounts(){ localStorage.setItem('mat_counts', JSON.stringify(counts)); }
 function preset(n){
-  TOPICS.forEach(w=>{ counts[w.v] = Math.min(n, MAXN); document.getElementById('cnt_'+w.v).value = counts[w.v]; });
+  TOPICS.forEach(w=>{ counts[w.v] = Math.min(n, MAXN); syncInputs(w.v); });
   saveCounts(); updateTotal();
 }
 function updateTotal(){
   let total = 0;
-  TOPICS.forEach(w=>{ total += Math.min(counts[w.v] ?? 3, MAXN); });
+  TOPICS.forEach(w=>{ total += dflt(w.v); });
   document.getElementById('totalNum').textContent = total;
-  document.getElementById('btnStart').disabled = total===0;
+  const bs = document.getElementById('btnStart');
+  bs.disabled = total===0;
+  bs.textContent = total>0 ? `${UI[state.lang].start} · ${total}` : UI[state.lang].start;
 }
 
 function generateUnique(k, n){
@@ -678,10 +685,9 @@ function generateUnique(k, n){
 }
 
 function startSession(){
-  TOPICS.forEach(w=>readCount(w.v)); saveCounts();
   const deck = [];
   TOPICS.forEach(w=>{
-    const n = Math.min(counts[w.v] ?? 3, MAXN);
+    const n = dflt(w.v);
     if(n>0) generateUnique(w.v, n).forEach(item=>deck.push(item));
   });
   if(deck.length===0) return;
@@ -791,9 +797,7 @@ function applyLang(){
   document.getElementById('btnEN').setAttribute('aria-pressed', state.lang==='en');
   document.getElementById('suTitle').textContent = UI[state.lang].suTitle;
   document.getElementById('suDesc').textContent = UI[state.lang].suDesc;
-  document.getElementById('p3').textContent = UI[state.lang].p3;
-  document.getElementById('pMax').textContent = UI[state.lang].pMax;
-  document.getElementById('p0').textContent = UI[state.lang].p0;
+  document.getElementById('pC').textContent = UI[state.lang].pC;
   document.getElementById('lblTotal').textContent = UI[state.lang].total;
   document.getElementById('btnStart').textContent = UI[state.lang].start;
   document.getElementById('nextBtn').textContent = UI[state.lang].next;
@@ -801,10 +805,12 @@ function applyLang(){
   document.getElementById('btnEnd').textContent = UI[state.lang].end;
   document.getElementById('hint').textContent = UI[state.lang].hint;
   TOPICS.forEach(w=>{
-    const row = document.getElementById('cnt_'+w.v);
-    if(row){
-      row.closest('.secrow').querySelector('label').textContent = state.lang==='id'?w.id:w.en;
-      row.value = counts[w.v] ?? 3;
+    const cEl = document.getElementById('cnt_'+w.v);
+    if(cEl){
+      cEl.closest('.secrow').querySelector('label').textContent = state.lang==='id'?w.id:w.en;
+      const capEl = document.getElementById('cap_'+w.v);
+      if(capEl) capEl.textContent = state.lang==='id' ? `otomatis · max ${MAXN}` : `auto-generated · max ${MAXN}`;
+      syncInputs(w.v);
     }
   });
   if(document.getElementById('viewQuiz').classList.contains('on') && session) renderCard();
