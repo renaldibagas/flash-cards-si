@@ -37,9 +37,16 @@
   .setup-card{ background:var(--sheet); border:1px solid rgba(29,36,51,.14); border-radius:6px; box-shadow:0 14px 34px rgba(29,36,51,.12); padding:22px 22px 18px; }
   .setup-card h2{ font-family:'Fraunces', Georgia, serif; font-size:1.2rem; margin-bottom:4px; }
   .setup-card .desc{ font-size:.85rem; color:var(--faint); line-height:1.45; margin-bottom:14px; }
+  .modes{ display:flex; gap:10px; margin-bottom:16px; }
+  .modecard{ flex:1; font:inherit; text-align:left; cursor:pointer; background:#fff; border:1.5px solid rgba(29,36,51,.28); border-radius:10px; padding:12px 14px; transition:border-color .15s, background .15s; }
+  .modecard:hover{ border-color:var(--ink); }
+  .modecard.on{ border-color:var(--accent); background:var(--accent-soft); }
+  .modecard b{ display:block; font-size:.95rem; font-family:'Fraunces', Georgia, serif; }
+  .modecard span{ display:block; font-size:.73rem; color:var(--faint); margin-top:3px; line-height:1.35; }
   .presets{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
   .presets button{ font:inherit; font-size:.78rem; padding:6px 12px; border-radius:999px; border:1.5px solid rgba(29,36,51,.3); background:#fff; cursor:pointer; color:var(--ink); }
   .presets button:hover{ border-color:var(--ink); }
+  [hidden]{ display:none !important; }
   .secrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 2px; border-top:1px dashed rgba(29,36,51,.2); }
   .secrow label{ font-size:.95rem; }
   .secrow .cap{ font-size:.72rem; color:var(--faint); }
@@ -117,16 +124,43 @@
   <div class="view on" id="viewSetup">
     <div class="setup-card">
       <h2 id="suTitle">Atur sesi latihan</h2>
-      <p class="desc" id="suDesc"></p>
-      <div class="presets">
-        <button onclick="preset(5)">5</button>
-        <button onclick="preset(10)">10</button>
-        <button onclick="preset(25)">25</button>
-        <button onclick="preset(100)">100</button>
-        <button onclick="preset(0)" id="pC"></button>
+      <div class="modes">
+        <button class="modecard" id="mcCustom" onclick="setMode('custom')"><b id="mcCName"></b><span id="mcCSub"></span></button>
+        <button class="modecard" id="mcExam" onclick="setMode('exam')"><b id="mcEName"></b><span id="mcESub"></span></button>
       </div>
-      <div id="secList"></div>
-      <div class="totalbar"><span id="lblTotal"></span><b id="totalNum">0</b></div>
+      <div id="customArea">
+        <p class="desc" id="suDesc"></p>
+        <div class="presets">
+          <button onclick="preset(5)">5</button>
+          <button onclick="preset(10)">10</button>
+          <button onclick="preset(25)">25</button>
+          <button onclick="preset(100)">100</button>
+          <button onclick="preset(0)" id="pC"></button>
+        </div>
+        <div id="secList"></div>
+        <div class="totalbar"><span id="lblTotal"></span><b id="totalNum">0</b></div>
+      </div>
+      <div id="examArea" hidden>
+        <p class="desc" id="exDesc"></p>
+        <div class="presets">
+          <button onclick="examPreset()">50 + 25</button>
+        </div>
+        <div class="secrow">
+          <div class="secname"><label id="lblEasy"></label><div class="cap" id="capEasy"></div></div>
+          <div class="ctrl">
+            <input id="rng_e" type="range" min="0" max="100" value="50" oninput="onExamRange('e', this.value)">
+            <input id="cnt_e" type="number" min="0" max="100" value="50" onchange="onExamNum('e', this)">
+          </div>
+        </div>
+        <div class="secrow">
+          <div class="secname"><label id="lblMod"></label><div class="cap" id="capMod"></div></div>
+          <div class="ctrl">
+            <input id="rng_m" type="range" min="0" max="100" value="25" oninput="onExamRange('m', this.value)">
+            <input id="cnt_m" type="number" min="0" max="100" value="25" onchange="onExamNum('m', this)">
+          </div>
+        </div>
+        <div class="totalbar"><span id="lblTotalX"></span><b id="examNum">0</b></div>
+      </div>
       <button class="btn-start" id="btnStart" onclick="startSession()" disabled></button>
     </div>
   </div>
@@ -184,6 +218,12 @@ const UI = {
   id:{sub:'BBK1EAB3 — Latihan soal acak dengan penjelasan', suTitle:'Atur sesi latihan',
       suDesc:'Atur jumlah soal per bagian (maks 100). Semua soal unik dalam satu sesi. Jika jumlah melebihi bank soal bagian itu, soal berputar menurut yang paling lama tidak muncul — semua soal tersentuh dulu sebelum ada yang berulang.',
       pC:'Kosongkan', total:'Total soal', start:'Mulai Sesi',
+      mcC:'Per Bagian', mcCS:'Atur jumlah soal untuk tiap materi (M1–M6).',
+      mcE:'Mode Ujian', mcES:'Simulasi format ujian: campuran soal mudah & sedang dari semua bagian.',
+      exDesc:'Simulasi ujian: pilih jumlah soal mudah dan soal sedang. Soal diacak dari SEMUA bagian, tidak berulang dalam satu sesi, dan berputar adil antar sesi.',
+      eEasy:'Soal Mudah', eMod:'Soal Sedang',
+      eCapE:'tingkat semua materi', eCapM:'tingkat semua materi', ePreset:'Format Ujian',
+      difE:'Mudah', difM:'Sedang',
       next:'Soal Berikutnya', skip:'Lewati', end:'Akhiri sesi', hint:'Tips: tekan 1–4 untuk memilih jawaban, N untuk lanjut.',
       qof:'Soal', of:'dari', answered:'Dijawab', score:'Skor',
       enTitle:'Sesi selesai!', enSub:'Bagus — lihat ringkasan per bagian di bawah.', enScoreLbl:'benar', enAccLbl:'akurasi',
@@ -191,6 +231,12 @@ const UI = {
   en:{sub:'BBK1EAB3 — Random practice questions with explanations', suTitle:'Set up your practice session',
       suDesc:'Set questions per section (max 100). All questions are unique within a session. If the count exceeds a section\u2019s bank, questions rotate least-recently-seen first — every question is covered before repeats return.',
       pC:'Clear', total:'Total questions', start:'Start Session',
+      mcC:'Per Section', mcCS:'Set the question count for each module (W1–W6).',
+      mcE:'Exam Mode', mcES:'Simulate the exam format: a mix of easy & moderate questions from all sections.',
+      exDesc:'Exam simulation: choose how many easy and moderate questions. They are shuffled across ALL sections, never repeat within a session, and rotate fairly between sessions.',
+      eEasy:'Easy questions', eMod:'Moderate questions',
+      eCapE:'across all modules', eCapM:'across all modules', ePreset:'Exam format',
+      difE:'Easy', difM:'Moderate',
       next:'Next question', skip:'Skip', end:'End session', hint:'Tip: press 1–4 to pick an answer, N to move on.',
       qof:'Question', of:'of', answered:'Answered', score:'Score',
       enTitle:'Session complete!', enSub:'Well done — see the breakdown per section below.', enScoreLbl:'correct', enAccLbl:'accuracy',
@@ -449,12 +495,578 @@ Q.push(
   x:{id:'Job analysis mengumpulkan informasi rinci tentang pekerjaan; job design mendefinisikan cara pekerjaan dilakukan.',en:'Job analysis collects detailed information about a job; job design defines how the work gets done.'}}
 );
 
+/* ---------------- WEEK 1 : additional ---------------- */
+Q.push(
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Fungsi Akuntansi',en:'Accounting Function'},d:'e',
+  q:{id:'Contoh tugas fungsi Accounting sebagai Business Function:',en:'Example tasks of the Accounting function as a Business Function:'},
+  options:[{t:{id:'Mengelola buku besar, menghitung pajak, menyusun laporan keuangan',en:'Managing the general ledger, calculating taxes, preparing financial statements'},c:true},
+   {t:{id:'Mengubah bahan baku menjadi barang jadi',en:'Transforming raw materials into finished goods'},c:false},
+   {t:{id:'Merancang jadwal produksi pabrik',en:'Designing the factory schedule'},c:false},
+   {t:{id:'Mengelola hubungan pelanggan',en:'Managing customer relationships'},c:false}],
+  x:{id:'Contoh di slide: departemen akuntansi menjawab "apa keahlian/tugasnya?" — mengelola general ledger, menghitung pajak, dan menyiapkan laporan keuangan.',en:'Slide example: the accounting department answers "What are its tasks?" — managing the general ledger, calculating taxes, and preparing financial statements.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Fungsi Produksi',en:'Production Function'},d:'e',
+  q:{id:'Contoh tugas fungsi Production sebagai Business Function:',en:'Example tasks of the Production function as a Business Function:'},
+  options:[{t:{id:'Mengubah bahan baku menjadi barang jadi sesuai jadwal pabrik',en:'Transforming raw materials into finished goods according to the factory schedule'},c:true},
+   {t:{id:'Menyusun laporan keuangan',en:'Preparing financial statements'},c:false},
+   {t:{id:'Menghitung pajak perusahaan',en:'Calculating company taxes'},c:false},
+   {t:{id:'Menjawab pertanyaan benefit karyawan',en:'Answering employee benefits questions'},c:false}],
+  x:{id:'Slide contoh: produksi mengubah bahan mentah menjadi barang selesai sesuai jadwal pabrik — "keterampilan spesifik" departemen tersebut.',en:'Slide example: production transforms raw materials into finished goods per the factory schedule — that department\u2019s specific expertise.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Proses Jual',en:'Selling Process'},d:'m',
+  q:{id:'Urutan yang tepat pada contoh proses bisnis Penjualan (Selling):',en:'The correct sequence in the Selling business process example:'},
+  options:[{t:{id:'Place an Order → Input Order → Check Incoming Payment → Approval → Prepare Product → Delivery',en:'Place an Order → Input Order → Check Incoming Payment → Approval → Prepare Product → Delivery'},c:true},
+   {t:{id:'Approval → Place an Order → Delivery',en:'Approval → Place an Order → Delivery'},c:false},
+   {t:{id:'Delivery → Check Incoming Payment → Place an Order',en:'Delivery → Check Incoming Payment → Place an Order'},c:false},
+   {t:{id:'Input Order → Delivery → Place an Order',en:'Input Order → Delivery → Place an Order'},c:false}],
+  x:{id:'Proses selling lintas fungsi: pesanan masuk → input pesanan → cek pembayaran masuk (cashier/finance) → approval → penyiapan produk (production) → pengiriman.',en:'The cross-functional selling process: order placed → order input → incoming payment check (cashier/finance) → approval → product preparation (production) → delivery.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Fondasi Sistem Informasi',en:'IS Foundation'},d:'e',
+  q:{id:'Hubungan business process dengan information system:',en:'The relationship between business processes and information systems:'},
+  options:[{t:{id:'Proses bisnis adalah fondasi semua aplikasi SI — tanpa proses bisnis, tidak ada SI yang beroperasi',en:'Business processes are the foundation of all IS applications — no IS operates without them'},c:true},
+   {t:{id:'Sistem informasi berjalan tanpa proses bisnis',en:'Information systems run without business processes'},c:false},
+   {t:{id:'Proses bisnis hanya catatan tambahan',en:'Business processes are just optional notes'},c:false},
+   {t:{id:'Proses bisnis hanya milik departemen akuntansi',en:'Business processes belong only to accounting'},c:false}],
+  x:{id:'Business processes menjadi fondasi semua aplikasi sistem informasi — tidak ada sistem informasi yang beroperasi tanpa proses bisnis.',en:'Business processes are the foundation of all information system applications — no information system operates without business processes.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Isu Informasi',en:'Information Issues'},d:'e',
+  q:{id:'Masalah informasi yang muncul saat organisasi tumbuh dan memecah fungsi ke unit kecil:',en:'Information problems when organizations grow and split functions into smaller units:'},
+  options:[{t:{id:'Redundansi data, harus mengonsolidasi informasi, informasi lambat karena database terpisah',en:'Data redundancy, hard consolidation, slow information due to disparate databases'},c:true},
+   {t:{id:'Data menjadi jauh lebih sederhana',en:'Data becomes much simpler'},c:false},
+   {t:{id:'Database otomatis menyatu',en:'Databases automatically merge'},c:false},
+   {t:{id:'Informasi diperoleh lebih cepat',en:'Information arrives faster'},c:false}],
+  x:{id:'Isu: data redundan (Unit B tidak ikut terbarui), konsolidasi informasi yang beragam, dan lama waktu perolehan informasi karena database terpisah.',en:'Issues: redundant data (Unit B keeps stale copies), consolidating diverse information, and long retrieval time due to disparate databases.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Pergeseran Paradigma',en:'Paradigm Shift'},d:'m',
+  q:{id:'Kemuncuran ERP ditandai oleh pergeseran perspektif perusahaan dari:',en:'The emergence of ERP is marked by a shift from:'},
+  options:[{t:{id:'Pendekatan fungsional ke pendekatan berbasis proses yang didukung teknologi informasi',en:'A functional approach to a process-based approach supported by IT'},c:true},
+   {t:{id:'Pendekatan proses ke pendekatan fungsional',en:'A process-based to a functional approach'},c:false},
+   {t:{id:'Teknologi informasi ke kertas manual',en:'IT to manual paper'},c:false},
+   {t:{id:'Database terpusat ke sistem silo',en:'Centralized database to silo systems'},c:false}],
+  x:{id:'Pergeseran dari fungsional ke berbasis proses didukung teknologi informasi (Motiwalla & Thompson, 2012) — inilah awal munculnya enterprise system.',en:'The shift from functional to process-based, supported by IT (Motiwalla & Thompson, 2012) is what gave rise to enterprise systems.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Terminologi',en:'Terminology'},d:'m',
+  q:{id:'Mengapa enterprise systems sering dianggap sinonim dengan ERP?',en:'Why are enterprise systems often considered synonymous with ERP?'},
+  options:[{t:{id:'Karena ERP adalah produk pertama yang dikembangkan dalam kategori itu',en:'Because ERP was the first product developed in that category'},c:true},
+   {t:{id:'Karena ERP paling murah',en:'Because ERP is the cheapest'},c:false},
+   {t:{id:'Karena ERP paling baru dirilis',en:'Because ERP is the newest product'},c:false},
+   {t:{id:'Karena semua sistem informasi adalah ERP',en:'Because all information systems are ERP'},c:false}],
+  x:{id:'Slide Application/Tools: "Enterprise systems are synonymous with ERP because ERP was the first product developed."',en:'Slide "Application/Tools": enterprise systems are synonymous with ERP because ERP was the first product developed.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Lisensi ERP',en:'ERP Licensing'},d:'e',
+  q:{id:'Aplikasi enterprise sistem/ERP tersedia dalam model:',en:'Enterprise system/ERP applications are available as:'},
+  options:[{t:{id:'Proprietary dan Open Source',en:'Proprietary and Open Source'},c:true},
+   {t:{id:'Hanya proprietary',en:'Proprietary only'},c:false},
+   {t:{id:'Hanya open source',en:'Open source only'},c:false},
+   {t:{id:'Hanya perangkat keras',en:'Hardware only'},c:false}],
+  x:{id:'Slide Application/Tools menyebut dua golongan aplikasi: proprietary dan open source.',en:'The Application/Tools slide lists two classes of products: proprietary and open source.'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Posisi Sentral',en:'Central Role'},d:'e',
+  q:{id:'Gambaran bagaimana Enterprise System bekerja dalam perusahaan:',en:'How does an Enterprise System operate within a company?'},
+  options:[{t:{id:'Sebagai "jembatan"/sistem pusat mengintegrasikan 4 area fungsi bisnis dan menghubungkan vendor dan pelanggan',en:'A "bridge"/central system integrating 4 key business functions, connecting vendors and customers'},c:true},
+   {t:{id:'Aplikasi berdiri sendiri milik tiap karyawan',en:'Standalone apps owned by each employee'},c:false},
+   {t:{id:'Hanya menghubungkan departemen akuntansi',en:'Linking only the accounting department'},c:false},
+   {t:{id:'Menolak data dari pihak eksternal',en:'Rejecting data from external parties'},c:false}],
+  x:{id:'Enterprise System bekerja sebagai jembatan/sistem pusat yang mengintegrasikan area fungsi bisnis utama sekaligus organisasi dengan pihak eksternal (vendor & pelanggan).',en:'The Enterprise System acts as a bridge/central system integrating key functional areas and connecting the organization with external parties (vendors and customers).'}},
+ {week:'w1',weekName:{id:'Pengantar ERP',en:'Intro to ERP'},topic:{id:'Sistem Informasi di Organisasi',en:'IS in Organization'},d:'m',
+  q:{id:'Posisi Information Systems dalam perusahaan menurut materi:',en:'The position of Information Systems in a company per the material:'},
+  options:[{t:{id:'Komponen kritis berperan besar di aktivitas primer sekaligus sekunder value chain',en:'Critical components playing a major role in both primary and secondary activities of the value chain'},c:true},
+   {t:{id:'Hanya berperan di aktivitas sekunder',en:'Only in secondary activities'},c:false},
+   {t:{id:'Hanya berperan di aktivitas primer',en:'Only in primary activities'},c:false},
+   {t:{id:'Di luar value chain perusahaan',en:'Outside the company value chain'},c:false}],
+  x:{id:'Sistem informasi adalah komponen kritis organisasi berperan besar di aktivitas primer dan sekunder dalam value chain perusahaan (akuntansi, keuangan, HRM, operasi bisnis).',en:'IS are critical organizational components, major to both primary and secondary value-chain activities (accounting, finance, HRM, business operations).'}}
+);
+
+/* ---------------- WEEK 2 : additional ---------------- */
+Q.push(
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Level Kematangan AI',en:'AI Maturity Level'},d:'e',
+  q:{id:'AI Maturity Level 2 adalah:',en:'AI Maturity Level 2 is:'},
+  options:[{t:{id:'Predictive: forecast, scoring, anomaly detection',en:'Predictive: forecast, scoring, anomaly detection'},c:true},
+   {t:{id:'Rule-based automation',en:'Rule-based automation'},c:false},
+   {t:{id:'Generative',en:'Generative'},c:false},
+   {t:{id:'Adaptive / Agentic',en:'Adaptive / Agentic'},c:false}],
+  x:{id:'Level 2 = Predictive: peramalan (forecast), scoring, dan anomaly detection — memperkirakan apa yang mungkin terjadi.',en:'Level 2 = Predictive: forecasting, scoring, and anomaly detection — estimating what might happen.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Level Kematangan AI',en:'AI Maturity Level'},d:'e',
+  q:{id:'AI Maturity Level 3 adalah:',en:'AI Maturity Level 3 is:'},
+  options:[{t:{id:'Generative: natural language, summarization, creation',en:'Generative: natural language, summarization, creation'},c:true},
+   {t:{id:'Rule-based automation',en:'Rule-based automation'},c:false},
+   {t:{id:'Predictive',en:'Predictive'},c:false},
+   {t:{id:'Agentic',en:'Agentic'},c:false}],
+  x:{id:'Level 3 = Generative: bahasa natural, meringkas (summarization), dan menciptakan konten.',en:'Level 3 = Generative: natural language, summarization, and content creation.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Memilih Tingkat AI',en:'Choosing the AI Level'},d:'m',
+  q:{id:'Prinsip memilih tingkat AI untuk suatu proses bisnis:',en:'The principle for choosing an AI level for a business process:'},
+  options:[{t:{id:'Sesuai nilai bisnis, risiko, data, dan kemampuan governance — tidak semua proses butuh Level 4',en:'Finance, procurement, and logistics; all processes need Level 4'},c:true},
+   {t:{id:'Selalu pakai level tertinggi',en:'Always use the highest level'},c:false},
+   {t:{id:'Ikuti proses yang dipakai pesaing',en:'Follow what competitors use'},c:false},
+   {t:{id:'Tingkat AI otomatis naik sendiri',en:'The AI level rises automatically'},c:false}],
+  x:{id:'Tidak semua proses membutuhkan Level 4 — pilih tingkat AI sesuai nilai bisnis, risiko, data, dan kemampuan governance.',en:'Not every process needs Level 4 — choose the AI level based on business value, risk, data, and governance capability.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Risiko AI',en:'AI Risks'},d:'e',
+  q:{id:'Prinsip "garbage in, garbage out" pada AI terkait risiko:',en:'"Garbage in, garbage out" relates to which AI risk:'},
+  options:[{t:{id:'Data Quality',en:'Data Quality'},c:true},
+   {t:{id:'Bias',en:'Bias'},c:false},
+   {t:{id:'Explainability',en:'Explainability'},c:false},
+   {t:{id:'Change Management',en:'Change Management'},c:false}],
+  x:{id:'Data quality: model hanya sebaik data yang disajikannya — "garbage in → garbage out".',en:'Data quality: the model is only as good as its input data — garbage in, garbage out.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Risiko AI',en:'AI Risks'},d:'e',
+  q:{id:'Risiko AI "pola data lama dapat membawa ketidakadilan" disebut:',en:'The AI risk "old data patterns can carry unfairness" is called:'},
+  options:[{t:{id:'Bias',en:'Bias'},c:true},
+   {t:{id:'Data Quality',en:'Data Quality'},c:false},
+   {t:{id:'Prompt Injection',en:'Prompt Injection'},c:false},
+   {t:{id:'Hallucination',en:'Hallucination'},c:false}],
+  x:{id:'Bias: model belajar dari pola data lama yang bisa memuat ketidakadilan sistemik (mis. dalam seleksi).',en:'Bias: models learn from historical patterns that can carry systemic unfairness (e.g., in selection).'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Risiko AI',en:'AI Risks'},d:'e',
+  q:{id:'Pertanyaan "mengapa sistem memberi rekomendasi ini?" terkait risiko:',en:'The question "why did the system give this recommendation?" relates to:'},
+  options:[{t:{id:'Explainability',en:'Explainability'},c:true},
+   {t:{id:'Data Quality',en:'Data Quality'},c:false},
+   {t:{id:'Bias',en:'Bias'},c:false},
+   {t:{id:'Change Management',en:'Change Management'},c:false}],
+  x:{id:'Explainability: pengguna harus dapat memahami alasan rekomendasi — bukan "kotak hitam".',en:'Explainability: users should be able to understand why a recommendation was given — not a black box.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Risiko AI',en:'AI Risks'},d:'e',
+  q:{id:'Risiko AI yang mencakup akses, data leakage, dan prompt injection:',en:'The AI risk covering access, data leakage, and prompt injection:'},
+  options:[{t:{id:'Security & Privacy',en:'Security & Privacy'},c:true},
+   {t:{id:'Explainability',en:'Explainability'},c:false},
+   {t:{id:'Data Quality',en:'Data Quality'},c:false},
+   {t:{id:'Hallucination',en:'Hallucination'},c:false}],
+  x:{id:'Security & Privacy meliputi pengaturan akses, kebocoran data (data leakage), dan serangan prompt injection.',en:'Security & Privacy covers access control, data leakage, and prompt-injection attacks.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Risiko AI',en:'AI Risks'},d:'e',
+  q:{id:'Risiko AI terkait peran, skill, proses, dan budaya yang ikut berubah:',en:'The AI risk about roles, skills, processes, and culture changing together:'},
+  options:[{t:{id:'Change Management',en:'Change Management'},c:true},
+   {t:{id:'Bias',en:'Bias'},c:false},
+   {t:{id:'Data Quality',en:'Data Quality'},c:false},
+   {t:{id:'Prompt Injection',en:'Prompt Injection'},c:false}],
+  x:{id:'Change Management: adopsi AI mengubah peran, skill, proses, dan budaya organisasi — harus dikelola, bukan diabaikan.',en:'Change Management: AI adoption changes roles, skills, processes, and organizational culture — it must be managed, not ignored.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Tipe Enterprise',en:'Enterprise Types'},d:'e',
+  q:{id:'Karakteristik Dynamic Enterprise:',en:'The Dynamic Enterprise is characterized by:'},
+  options:[{t:{id:'Sense → Respond → Adjust; ERP mulai berperan sebagai system of insight + system of action',en:'Sense → Respond → Adjust; ERP becomes a system of insight + action'},c:true},
+   {t:{id:'Plan → Execute → Record',en:'Plan → Execute → Record'},c:false},
+   {t:{id:'Sense → Learn → Predict → Decide → Act',en:'Sense → Learn → Predict → Decide → Act'},c:false},
+   {t:{id:'Tanpa data real-time',en:'No real-time data'},c:false}],
+  x:{id:'Dynamic Enterprise (contoh Amazon, e-commerce) merespons perubahan cepat: Sense → Respond → Adjust; ERP sebagai system of insight + action.',en:'A Dynamic Enterprise (e.g., Amazon, e-commerce) responds quickly to change: Sense → Respond → Adjust, with ERP as system of insight + action.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Tipe Enterprise',en:'Enterprise Types'},d:'m',
+  q:{id:'Pasangan "pertanyaan utama" dengan jenis enterprise yang benar:',en:'The correct pairing of "key question" with enterprise type:'},
+  options:[{t:{id:'Static: What happened? · Dynamic: What is happening? · Adaptive: What will happen and what should we do?',en:'Static: What happened? · Dynamic: What is happening? · Adaptive: What will happen and what should we do?'},c:true},
+   {t:{id:'Static: What will happen? · Dynamic: What happened?',en:'Static: What will happen? · Dynamic: What happened?'},c:false},
+   {t:{id:'Adaptive: What happened? · Static: What should we do?',en:'Adaptive: What happened? · Static: What should we do?'},c:false},
+   {t:{id:'Dynamic: What happened? · Adaptive: What happened?',en:'Dynamic: What happened? · Adaptive: What happened?'},c:false}],
+  x:{id:'Tabel perbandingan: Static menjawab "What happened?", Dynamic "What is happening?", dan Adaptive "What will happen & what should we do?" — Static = bereaksi setelah perubahan, Dynamic = merespons cepat, Adaptive = belajar & mengantisipasi.',en:'Comparison table: Static asks "What happened?", Dynamic "What is happening?", Adaptive "What will happen & what should we do?" — Static reacts after change, Dynamic responds quickly, Adaptive learns and anticipates.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Digital Backbone',en:'Digital Backbone'},d:'m',
+  q:{id:'Contoh alur nilai ERP sebagai "digital backbone":',en:'The example value flow of ERP as a "digital backbone":'},
+  options:[{t:{id:'Customer Order → Sales → Inventory → Procurement/Production → Delivery → Finance',en:'Customer Order → Sales → Inventory → Procurement/Production → Delivery → Finance'},c:true},
+   {t:{id:'Finance → Delivery → Customer Order',en:'Finance → Delivery → Customer Order'},c:false},
+   {t:{id:'Inventory → Customer Order → Sales',en:'Inventory → Customer Order → Sales'},c:false},
+   {t:{id:'Sales → Finance → Delivery',en:'Sales → Finance → Delivery'},c:false}],
+  x:{id:'ERP menghubungkan fungsi bisnis lewat data & proses terintegrasi; contoh alur: Customer Order → Sales → Inventory → Procurement/Production → Delivery → Finance.',en:'ERP links business functions through integrated data and processes; the example flow: Customer Order → Sales → Inventory → Procurement/Production → Delivery → Finance.'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Tingkat Intelligent ERP',en:'Intelligent ERP Levels'},d:'m',
+  q:{id:'Tingkat Intelligent ERP yang membantu menjawab "apa yang sebaiknya dilakukan?" dengan rekomendasi dan skenario:',en:'The Intelligent ERP level that helps answer "what should we do?" with recommendations and scenarios:'},
+  options:[{t:{id:'Prescriptive / Generative',en:'Prescriptive / Generative'},c:true},
+   {t:{id:'Transactional',en:'Transactional'},c:false},
+   {t:{id:'Analytical',en:'Analytical'},c:false},
+   {t:{id:'Historical reporting',en:'Historical reporting'},c:false}],
+  x:{id:'Prescriptive/Generative membantu keputusan: rekomendasi, draft, skenario analysis, conversational AI — melengkapi Transactional (mencatat) dan Analytical (menjawab mengapa).',en:'Prescriptive/Generative supports decisions: recommendations, drafts, scenario analysis, conversational AI — complementing Transactional (recording) and Analytical (answering why).'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Arsitektur AI-ERP',en:'AI-ERP Architecture'},d:'m',
+  q:{id:'Pernyataan yang tepat tentang Governance dalam arsitektur AI-enabled ERP:',en:'The correct statement about Governance in AI-enabled ERP architecture:'},
+  options:[{t:{id:'Governance harus dirancang bersama proses dan teknologi, bukan lapisan yang ditambahkan belakangan',en:'Governance must be designed alongside processes and technology, not tacked on last'},c:true},
+   {t:{id:'Governance adalah lapisan paling akhir dan bersifat opsional',en:'Governance is a final, optional layer'},c:false},
+   {t:{id:'Governance hanya urusan firewall jaringan',en:'Governance is only about network firewalls'},c:false},
+   {t:{id:'Governance menggantikan audit trail',en:'Governance replaces the audit trail'},c:false}],
+  x:{id:'Arsitektur AI-enabled ERP: Business Process (P2P, O2C, H2R, Plan-to-Produce) + ERP & Data + AI Services + Governance (security, privacy, access, human oversight, monitoring).',en:'AI-enabled ERP architecture: Business Process (P2P, O2C, H2R, Plan-to-Produce) + ERP & Data + AI Services + Governance (security, privacy, access, human oversight, monitoring).'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Use Case AI: Manufaktur',en:'AI Use Case: Manufacturing'},d:'m',
+  q:{id:'Hasil utama dari predictive maintenance dengan AI:',en:'The main result of AI-based predictive maintenance:'},
+  options:[{t:{id:'Keputusan maintenance berbasis kondisi aktual mesin, bukan hanya jadwal tetap',en:'Maintenance decisions based on actual machine conditions, not just fixed schedules'},c:true},
+   {t:{id:'Maintenance tetap mengikuti jadwal bulanan',en:'Maintenance still follows monthly schedules'},c:false},
+   {t:{id:'Mengganti semua mesin dengan yang baru',en:'Replacing all machines with new ones'},c:false},
+   {t:{id:'Menghapus work order dan spare parts',en:'Eliminating work orders and spare parts'},c:false}],
+  x:{id:'Sensor/IoT mengirim data kondisi mesin → AI mempelajari pola kegagalan → ERP menjadwalkan work order, spare parts, dan biaya (IoT → Data → AI → Alert → Maintenance Order).',en:'Sensors/IoT send machine-condition data → AI learns failure patterns → ERP schedules work orders, spare parts, and costs (IoT → Data → AI → Alert → Maintenance Order).'}},
+ {week:'w2',weekName:{id:'AI dalam ERP',en:'AI in ERP'},topic:{id:'Use Case AI: HR',en:'AI Use Case: HR'},d:'m',
+  q:{id:'Prinsip pengamanan penggunaan AI pada data HR dalam ERP:',en:'The principle for guarding AI use of HR data in ERP:'},
+  options:[{t:{id:'"Need to know" + role-based access; AI tidak boleh menjadi alasan membuka data HR yang tidak semestinya',en:'"Need to know" + role-based access; AI must not justify exposing HR data to unauthorized users'},c:true},
+   {t:{id:'AI boleh membuka semua data karyawan',en:'AI may open all employee data'},c:false},
+   {t:{id:'Fairness tidak diperlukan',en:'Fairness is not required'},c:false},
+   {t:{id:'Data personal bebas dipakai tanpa batas',en:'Personal data may be used freely'},c:false}],
+  x:{id:'Guardrail AI-HR: privasi, akses berbasis peran, fairness, dan batas penggunaan data personal — prinsip "need to know".',en:'HR-AI guardrails: privacy, role-based access, fairness, and limits on personal data — the "need-to-know" principle.'}}
+);
+
+/* ---------------- WEEK 3 : additional ---------------- */
+Q.push(
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Definisi Supply Chain',en:'Supply Chain Definition'},d:'e',
+  q:{id:'Supply Chain adalah:',en:'A Supply Chain is:'},
+  options:[{t:{id:'Jaringan organisasi, aktivitas, informasi, sumber daya, dan relasi yang memproduksi serta menyampaikan produk ke pelanggan',en:'A network of organizations, activities, information, resources, and relationships producing and delivering products to customers'},c:true},
+   {t:{id:'Hanya proses pengiriman barang',en:'Only the goods delivery process'},c:false},
+   {t:{id:'Hanya hubungan perusahaan dengan bank',en:'Only the company-bank relationship'},c:false},
+   {t:{id:'Daftar akun keuangan perusahaan',en:'A list of financial accounts'},c:false}],
+  x:{id:'Supply chain adalah jaringan organisasi, aktivitas, informasi, sumber daya, dan relasi yang terlibat memproduksi serta menyampaikan produk/jasa kepada pelanggan.',en:'A supply chain is a network of organizations, activities, information, resources, and relationships involved in producing and delivering products/services to customers.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Cakupan SCM',en:'SCM Scope'},d:'m',
+  q:{id:'Pernyataan "supply chain lebih dari sekadar logistik" karena SCM mencakup:',en:'"Supply chain is more than logistics" because SCM includes:'},
+  options:[{t:{id:'Planning, procurement, production, inventory, warehousing, distribution, order fulfillment',en:'Planning, procurement, production, inventory, warehousing, distribution, order fulfillment'},c:true},
+   {t:{id:'Hanya pengiriman',en:'Delivery only'},c:false},
+   {t:{id:'Hanya operasi gudang',en:'Warehouse operations only'},c:false},
+   {t:{id:'Hanya pembayaran pajak',en:'Tax payments only'},c:false}],
+  x:{id:'Supply chain mencakup planning, procurement, production, inventory, warehousing, distribution, dan order fulfillment — bukan hanya logistik.',en:'Supply chain spans planning, procurement, production, inventory, warehousing, distribution, and order fulfillment — not only logistics.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Aktan Supply Chain',en:'Supply Chain Actors'},d:'e',
+  q:{id:'Peran aktan Supplier dalam rantai pasok:',en:'The role of the Supplier in the supply chain:'},
+  options:[{t:{id:'Menyediakan bahan, komponen, jasa, atau kemasan',en:'Providing materials, components, services, or packaging'},c:true},
+   {t:{id:'Mengubah input menjadi produk jadi',en:'Transforming inputs into finished products'},c:false},
+   {t:{id:'Menyimpan dan mendistribusikan produk',en:'Storing and distributing products'},c:false},
+   {t:{id:'Membayar gaji karyawan',en:'Paying employee salaries'},c:false}],
+  x:{id:'Supplier menyediakan bahan baku, komponen, jasa, atau kemasan — contoh: PT Charoen Pokphand Indonesia (pakan & produk olahan ayam).',en:'Suppliers provide materials, components, services, or packaging — e.g., PT Charoen Pokphand Indonesia (feed and processed chicken products).'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Aktan Supply Chain',en:'Supply Chain Actors'},d:'e',
+  q:{id:'Peran aktan Manufacturer dalam rantai pasok:',en:'The role of the Manufacturer in the supply chain:'},
+  options:[{t:{id:'Mengubah input menjadi produk selesai',en:'Transforming inputs into finished products'},c:true},
+   {t:{id:'Menyediakan kemasan saja',en:'Providing packaging only'},c:false},
+   {t:{id:'Menjual langsung ke pelanggan akhir',en:'Selling directly to end customers'},c:false},
+   {t:{id:'Menciptakan permintaan pasar',en:'Creating market demand'},c:false}],
+  x:{id:'Manufacturer mentransformasi input menjadi produk jadi — contoh: PT Indofood Sukses Makmur yang memproduksi Indomie.',en:'Manufacturers transform inputs into finished products — e.g., PT Indofood Sukses Makmur producing Indomie.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Aktan Supply Chain',en:'Supply Chain Actors'},d:'m',
+  q:{id:'Perbedaan Distributor dan Retailer/Channel:',en:'The difference between Distributor and Retailer/Channel:'},
+  options:[{t:{id:'Distributor mengelola penyimpanan & distribusi ke pasar; Retailer menjual/menyerahkan produk ke pelanggan akhir',en:'Distributors manage storage & distribution to market; Retailers sell/deliver products to end customers'},c:true},
+   {t:{id:'Distributor memproduksi barang; Retailer menyediakan bahan mentah',en:'Distributors produce goods; Retailers supply raw materials'},c:false},
+   {t:{id:'Keduanya hanya berfokus pada produksi pabrik',en:'Both focus only on factory production'},c:false},
+   {t:{id:'Retailer hanya menyimpan barang tanpa menjual',en:'Retailers only store goods without selling'},c:false}],
+  x:{id:'Distributor menyimpan & mendistribusikan ke pasar (contoh Enseval); retailer/channel menjual ke pelanggan (contoh Indomart, Alfamart); customer menciptakan permintaan & umpan balik.',en:'Distributors store and distribute to market (e.g., Enseval); retailers/channels sell to customers (e.g., Indomart, Alfamart); customers create demand and feedback.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Aktan Supply Chain',en:'Supply Chain Actors'},d:'e',
+  q:{id:'Peran Customer dalam rantai pasok:',en:'The role of the Customer in the supply chain:'},
+  options:[{t:{id:'Menciptakan permintaan dan memberikan umpan balik',en:'Creating demand and providing feedback'},c:true},
+   {t:{id:'Memproduksi bahan mentah',en:'Producing raw materials'},c:false},
+   {t:{id:'Mengubah input menjadi produk jadi',en:'Transforming inputs into finished products'},c:false},
+   {t:{id:'Mengelola pergudangan',en:'Managing warehousing'},c:false}],
+  x:{id:'Customer berada di ujung rantai pasok: menciptakan permintaan (demand) dan menyediakan umpan balik (feedback).',en:'Customers sit at the end of the chain: they create demand and provide feedback.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Aliran Supply Chain',en:'Supply Chain Flows'},d:'e',
+  q:{id:'Aliran yang mencakup returns, repairs, recycling, dan reverse logistics:',en:'The flow that covers returns, repairs, recycling, and reverse logistics:'},
+  options:[{t:{id:'Return / Reverse Flow',en:'Return / Reverse Flow'},c:true},
+   {t:{id:'Material Flow',en:'Material Flow'},c:false},
+   {t:{id:'Information Flow',en:'Information Flow'},c:false},
+   {t:{id:'Financial Flow',en:'Financial Flow'},c:false}],
+  x:{id:'Return/reverse flow menangani retur, perbaikan, daur ulang, dan reverse logistics; material flow mentransformasikan raw material → WIP → produk jadi → distribusi.',en:'Return/reverse flow handles returns, repairs, recycling, and reverse logistics; material flow transforms raw materials → WIP → finished goods → distribution.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Definisi Produksi',en:'Production Definition'},d:'e',
+  q:{id:'Produksi (Production) adalah:',en:'Production is:'},
+  options:[{t:{id:'Transformasi bahan, tenaga kerja, mesin, dan informasi menjadi output bernilai — tidak hanya di pabrik',en:'Transforming materials, labor, machines, and information into valuable outputs — not only in factories'},c:true},
+   {t:{id:'Hanya aktivitas perakitan di pabrik besar',en:'Only assembly in large factories'},c:false},
+   {t:{id:'Aktivitas yang tidak bisa dijadwalkan dalam ERP',en:'Activities that cannot be planned in ERP'},c:false},
+   {t:{id:'Sumber daya manusia dalam perusahaan',en:'Human resources in a company'},c:false}],
+  x:{id:'Production: transformasi material, tenaga kerja, mesin, informasi, dan sumber daya lain menjadi barang/output bernilai; berlaku juga untuk PFAO (food, pharma, elektronik, otomotif, jasa).',en:'Production: transforming materials, labor, machines, information, and other resources into valuable goods/outputs; applies also to food, pharma, electronics, automotive, and services (industry 4.0: ERP must plan and record).'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Routing',en:'Routing'},d:'m',
+  q:{id:'Routing dalam konsep produksi ERP adalah:',en:'Routing in ERP production concepts is:'},
+  options:[{t:{id:'Urutan operasi produksi dan sumber daya yang digunakan',en:'The sequence of production operations and the resources used'},c:true},
+   {t:{id:'Daftar komponen untuk membuat satu unit produk',en:'The component list for making one product unit'},c:false},
+   {t:{id:'Lokasi/mesin tempat operasi dijalankan',en:'The location/machine where an operation is performed'},c:false},
+   {t:{id:'Pesanan resmi produksi suatu kuantitas',en:'An official order to produce a quantity'},c:false}],
+  x:{id:'Routing = urutan operasi & sumber daya; BOM = daftar komponen per unit; Work Center = lokasi/mesin/grup sumber daya; Production Order = pesanan resmi kuantitas & waktu.',en:'Routing = operation sequence and resources; BOM = component list per unit; Work Center = the location/machine/resource group; Production Order = an official order with quantity and time.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Work Center',en:'Work Center'},d:'e',
+  q:{id:'Work Center dalam produksi ERP adalah:',en:'A Work Center in ERP production is:'},
+  options:[{t:{id:'Lokasi/mesin/grup sumber daya tempat suatu operasi dijalankan',en:'The location/machine/resource group where an operation is performed'},c:true},
+   {t:{id:'Kompilasi kebutuhan material bebesan BOM',en:'The compilation of material needs with BOM'},c:false},
+   {t:{id:'Kios penjualan eceran',en:'A retail sales kiosk'},c:false},
+   {t:{id:'Manajer pusat panggilan',en:'A call center manager'},c:false}],
+  x:{id:'Work center adalah tempat/mesin/grup sumber daya tempat operasi produksi dijalankan.',en:'A work center is the location/machine/resource group where a production operation is performed.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Capacity Planning',en:'Capacity Planning'},d:'e',
+  q:{id:'Tujuan utama dari Capacity Planning di modul produksi ERP:',en:'The main goal of Capacity Planning in the ERP production module:'},
+  options:[{t:{id:'Memastikan kapasitas mesin dan tenaga kerja cukup untuk menjalankan rencana produksi',en:'Ensuring sufficient machine and labor capacity to execute the production plan'},c:true},
+   {t:{id:'Menghitung profit untuk investasi',en:'Computing investment profit'},c:false},
+   {t:{id:'Memantau kepatuhan perpajakan',en:'Monitoring tax compliance'},c:false},
+   {t:{id:'Mengontrol balik mutu pelanggan',en:'Controlling customer quality'},c:false}],
+  x:{id:'Capacity planning memastikan kapasitas mesin/tenaga kerja cukup untuk mengeksekusi rencana produksi.',en:'Capacity planning ensures machine/labor capacity is sufficient to execute the plan.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Transaksi Pengadaan',en:'Procurement Transaction'},d:'m',
+  q:{id:'Urutan transaksi pengadaan bahan baku yang benar:',en:'The correct sequence of raw-material procurement transactions:'},
+  options:[{t:{id:'Need identified → Purchase Requisition → Purchase Order → Goods Receipt → Invoice Verification → Payment',en:'Need identified → Purchase Requisition → Purchase Order → Goods Receipt → Invoice Verification → Payment'},c:true},
+   {t:{id:'Payment → Need identified → Purchase Order',en:'Payment → Need identified → Purchase Order'},c:false},
+   {t:{id:'Goods Receipt → Need identified → Purchase Requisition',en:'Goods Receipt → Need identified → Purchase Requisition'},c:false},
+   {t:{id:'Invoice Verification → Payment → Purchase Order',en:'Invoice Verification → Payment → Purchase Order'},c:false}],
+  x:{id:'Contoh transaksi pengadaan: kebutuhan teridentifikasi (produksi minta 1.000 unit) → PR (requisition) → PO dikirim ke supplier → barang diterima (goods receipt) → verifikasi invoice → payment.',en:'Example procurement transaction: need identified (production needs 1,000 units) → PR (requisition) → PO sent to supplier → goods receipt → invoice verification → payment.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'ATP',en:'ATP'},d:'e',
+  q:{id:'Dalam Sales & Distribution ERP, ATP adalah:',en:'In ERP Sales & Distribution, ATP is:'},
+  options:[{t:{id:'Available-to-Promise — mengecek ketersediaan produk untuk memberi tanggal pengiriman',en:'Available-to-Promise — checks product availability to promise a delivery date'},c:true},
+   {t:{id:'Automatic Transfer Protocol untuk pertukaran data',en:'Automatic Transfer Protocol for data exchange'},c:false},
+   {t:{id:'Assembled Test Procedure di lantai pabrik',en:'An Assembled Test Procedure at the factory'},c:false},
+   {t:{id:'Total Procurement Amount per kuartal',en:'Total Procurement Amount per quarter'},c:false}],
+  x:{id:'ATP (Available-to-Promise) dipakai di Sales & Distribution: mengecek ketersediaan barang agar tanggal pengiriman yang dijanjikan ke pelanggan realistis.',en:'ATP (Available-to-Promise) is used in Sales & Distribution to check product availability so the promised delivery date is realistic.'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Efek Berantai',en:'Ripple Effect'},d:'e',
+  q:{id:'Masalah di satu titik supply chain akan:',en:'A problem at one point of the supply chain will:'},
+  options:[{t:{id:'Menjalar: jeda material → produksi tertunda → stockout → pelanggan menunggu',en:'Ripple: material delay → delayed production → stockout → waiting customers'},c:true},
+   {t:{id:'Berhenti di titik itu',en:'Stop at that point'},c:false},
+   {t:{id:'Hanya ditanggung distributor',en:'Be borne only by the distributor'},c:false},
+   {t:{id:'Otomatis dihapus dari ERP',en:'Be automatically erased from ERP'},c:false}],
+  x:{id:'Produk yang sampai ke pelanggan adalah hasil rangkaian aktivitas, bukan kerja satu perusahaan — masalah di satu titik menimbulkan efek berantai (material delay → delayed production → stockout → waiting customers).',en:'A product reaching the customer results from a chain of activities, not one company; a problem at one point creates a ripple effect (material delay → delayed production → stockout → waiting customers).'}},
+ {week:'w3',weekName:{id:'SCM',en:'SCM'},topic:{id:'Arah Pengembangan SCM',en:'SCM Direction'},d:'m',
+  q:{id:'Kemampuan ERP SCM modern (visibilitas real-time, analytics, AI-assisted planning, IoT, kolaborasi pemasok) berfungsi untuk:',en:'Modern ERP SCM capabilities (real-time visibility, analytics, AI-assisted planning, IoT, supplier collaboration) serve to:'},
+  options:[{t:{id:'Membuat proses bisnis lebih terintegrasi, terukur, dan terlihat — bukan menggantikannya',en:'Make business processes more integrated, measurable, and visible — not replace them'},c:true},
+   {t:{id:'Menghapus kebutuhan proses bisnis',en:'Remove the need for business processes'},c:false},
+   {t:{id:'Menggantikan seluruh peran pemasok',en:'Replace the supplier entirely'},c:false},
+   {t:{id:'Mengurangi koordinasi lintas fungsi',en:'Reduce cross-functional coordination'},c:false}],
+  x:{id:'Arah perkembangan: dari transaksi & laporan berkala menjadi real-time visibility, integrated planning, analytics, mobile warehouse, hingga AI-assisted planning dan IoT — namun teknologi tidak menggantikan proses bisnis, melainkan menjadikannya lebih terintegrasi, terukur, dan terlihat.',en:'Direction of development: from transactions and periodic reports to real-time visibility, integrated planning, analytics, mobile warehouses, AI-assisted planning, and IoT — yet technology does not replace business processes; it makes them more integrated, measurable, and visible.'}}
+);
+
+/* ---------------- WEEK 4 : additional ---------------- */
+Q.push(
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Definisi Marketing',en:'Marketing Definition'},d:'e',
+  q:{id:'Marketing adalah:',en:'Marketing is:'},
+  options:[{t:{id:'Mengidentifikasi dan memenuhi kebutuhan manusia dan sosial — "meeting needs profitably"',en:'Identifying and meeting human and social needs — "meeting needs profitably"'},c:true},
+   {t:{id:'Hanya aktivitas periklanan berbayar',en:'Only paid advertising activity'},c:false},
+   {t:{id:'Transaksi tukar uang dengan barang saja',en:'Only money-for-goods transactions'},c:false},
+   {t:{id:'Proses menghitung pajak penjualan',en:'The process of calculating sales tax'},c:false}],
+  x:{id:'Marketing: mengidentifikasi dan memenuhi kebutuhan manusia & sosial. "Meeting needs profitably" berarti mengubah kebutuhan privat/sosial menjadi peluang bisnis yang menguntungkan.',en:'Marketing identifies and meets human and social needs; "meeting needs profitably" means turning a private or social need into a profitable business opportunity.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Definisi AMA',en:'AMA Definition'},d:'m',
+  q:{id:'Definisi formal Marketing menurut American Marketing Association:',en:'The formal definition of Marketing by the American Marketing Association:'},
+  options:[{t:{id:'Aktivitas, set institusi, dan proses untuk menciptakan, mengomunikasikan, menyerahkan, dan menukar offering yang bernilai bagi pelanggan, klien, mitra, dan masyarakat',en:'The activity, set of institutions, and processes for creating, communicating, delivering, and exchanging offerings with value for customers, clients, partners, and society'},c:true},
+   {t:{id:'Proses menjual barang dengan harga tertinggi',en:'Selling goods at the highest price'},c:false},
+   {t:{id:'Kumpulan iklan untuk menaikkan revenue',en:'A collection of ads to raise revenue'},c:false},
+   {t:{id:'Manajemen stok produk di gudang',en:'Managing product stock in warehouses'},c:false}],
+  x:{id:'AMA: marketing adalah activity, set of institutions, and processes for creating, communicating, delivering, and exchanging offerings that have value for customers, clients, partners, and society at large.',en:'AMA: marketing is the activity, set of institutions, and processes for creating, communicating, delivering, and exchanging offerings that have value for customers, clients, partners, and society at large.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Definisi Sales',en:'Sales Definition'},d:'e',
+  q:{id:'Sales adalah:',en:'Sales is:'},
+  options:[{t:{id:'Transaksi antara dua pihak di mana pembeli menerima barang, jasa, dan/atau aset sebagai pertukaran untuk uang',en:'A transaction between two parties where the buyer receives goods, services, and/or assets in exchange for money'},c:true},
+   {t:{id:'Aktivitas membangun citra merek jangka panjang',en:'Long-term brand-building activity'},c:false},
+   {t:{id:'Proses menyusun anggaran tahunan',en:'The annual budgeting process'},c:false},
+   {t:{id:'Layanan yang diberikan setelah produk dikirim',en:'Service given after the product is delivered'},c:false}],
+  x:{id:'Sales: transaksi antara dua pihak — pembeli menerima barang (tangible/intangible), jasa, dan/atau aset sebagai pertukaran untuk uang.',en:'Sales: a transaction between two parties — the buyer receives goods (tangible or intangible), services, and/or assets in exchange for money.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Pentingnya Marketing',en:'Why Marketing Matters'},d:'m',
+  q:{id:'Makna ungkapan "There must be a top line for there to be a bottom line" dalam konteks marketing:',en:'The meaning of "There must be a top line for there to be a bottom line" in the marketing context:'},
+  options:[{t:{id:'Tanpa permintaan yang cukup atas produk/jasa, fungsi keuangan, operasi, dan akuntansi tidak akan banyak arti karena firma tak bisa memperoleh laba',en:'Without sufficient demand, finance, operations, and accounting matter little because the firm cannot profit'},c:true},
+   {t:{id:'Keuntungan selalu berada di urutan teratas',en:'Profit always comes first'},c:false},
+   {t:{id:'Marketing adalah bagian paling kecil dari biaya',en:'Marketing is the smallest cost item'},c:false},
+   {t:{id:'Hanya pemasaran yang menentukan harga',en:'Only marketing sets prices'},c:false}],
+  x:{id:'"Top line" (penjualan/demand) harus ada dulu agar muncul "bottom line" (laba) — permintaan atas produk dan jasa menghidupkan fungsi keuangan, operasi, akuntansi, dan menciptakan lapangan kerja.',en:'The "top line" (sales/demand) must exist before the "bottom line" (profit) — demand powers finance, operations, and accounting, and creates jobs.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Modul Marketing CRM',en:'CRM Marketing Module'},d:'e',
+  q:{id:'Cara modul marketing CRM mendukung direct-marketing campaign:',en:'How CRM marketing modules support direct-marketing campaigns:'},
+  options:[{t:{id:'Menangkap data prospek & pelanggan, menyediakan informasi produk/jasa, qualifying leads untuk targeted marketing, serta menjadwal dan memantau kampanye',en:'Capturing prospect/customer data, providing product/service information, qualifying leads for targeted marketing, and scheduling and tracking campaigns'},c:true},
+   {t:{id:'Mengirim iklan tanpa segmen dan tanpa data',en:'Sending ads without segments or data'},c:false},
+   {t:{id:'Menghapus data pelanggan setelah kampanye',en:'Deleting customer data after the campaign'},c:false},
+   {t:{id:'Menghapus semua invoice',en:'Deleting all invoices'},c:false}],
+  x:{id:'Modul marketing CRM menyediakan capability untuk meng-capture data prospek/pelanggan, memberi informasi produk & jasa, qualifying leads untuk targeted marketing, dan men-schedule/men-track direct mailings maupun e-mail.',en:'CRM marketing modules capture prospect/customer data, provide product/service information, qualify leads for targeted marketing, and schedule/track direct mailings and e-mail.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Analitik Marketing',en:'Marketing Analytics'},d:'m',
+  q:{id:'Pemanfaatan analitik marketing dalam modul CRM antara lain:',en:'Marketing analytics in CRM modules are used to:'},
+  options:[{t:{id:'Mengidentifikasi pelanggan menguntungkan dan tidak menguntungkan serta menemukan peluang cross-selling',en:'Identify profitable and unprofitable customers and find cross-selling opportunities'},c:true},
+   {t:{id:'Menghitung depresiasi aset tetap',en:'Compute fixed-asset depreciation'},c:false},
+   {t:{id:'Menjadwalkan work order produksi',en:'Schedule production work orders'},c:false},
+   {t:{id:'Mengeliminasi seluruh basis pelanggan lama',en:'Eliminate the entire old customer base'},c:false}],
+  x:{id:'Modul marketing juga memuat tools analisis data marketing & pelanggan: mengidentifikasi pelanggan menguntungkan/tidak, merancang produk sesuai kebutuhan, dan menemukan peluang cross-selling.',en:'Marketing modules also contain tools to analyze marketing and customer data: identifying profitable/unprofitable customers, designing products for specific needs, and spotting cross-selling opportunities.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Sumber Data Target Market',en:'Target Market Data'},d:'e',
+  q:{id:'Sumber data untuk mendefinisikan target market:',en:'Sources of data for defining target markets:'},
+  options:[{t:{id:'Transaksi penjualan, kartu garansi, atau membeli database tentang organisasi dan individu',en:'Sales transactions, warranty cards, or purchasing databases about organizations and individuals'},c:true},
+   {t:{id:'Tebakan manajemen tanpa data',en:'Management guesswork without data'},c:false},
+   {t:{id:'Hanya survei internal per satu kuartal',en:'Only internal surveys every quarter'},c:false},
+   {t:{id:'Daftar absensi karyawan',en:'Employee attendance lists'},c:false}],
+  x:{id:'Data target market dikumpulkan dari mana pun: transaksi penjualan, kartu garansi, atau pembelian database; DBMS dipakai untuk mengkategorikan konsumen (usia, gender, pendapatan, pembelian terkait).',en:'Target-market data is collected everywhere: sales transactions, warranty cards, or purchased databases; DBMS sorts and categorizes consumers (age, gender, income, prior purchases).'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Sales Force Automation',en:'Sales Force Automation'},d:'m',
+  q:{id:'Fungsi modul Sales Force Automation (SFA) dalam CRM:',en:'The function of Sales Force Automation (SFA) modules in CRM:'},
+  options:[{t:{id:'Memusatkan upaya penjualan pada pelanggan paling menguntungkan dengan menyediakan info prospek/kontak, info produk, product configuration, dan pembuatan sales quote',en:'Focus sales efforts on the most profitable customers, providing prospect/contact info, product info, product configuration, and sales quote generation'},c:true},
+   {t:{id:'Menggantikan seluruh tim sales dengan mesin',en:'Replacing the entire sales team with machines'},c:false},
+   {t:{id:'Menghapus riwayat pembelian pelanggan',en:'Deleting customer purchase history'},c:false},
+   {t:{id:'Membekukan semua penawaran harga',en:'Freezing all price quotes'},c:false}],
+  x:{id:'SFA membantu staf sales menaikkan produktivitas dengan fokus pada pelanggan paling menguntungkan/kandidat terbaik: info prospek & kontak, informasi produk, konfigurasi produk, dan pembuatan sales quote.',en:'SFA helps sales staff raise productivity by focusing on the most profitable customers/good candidates: sales prospect and contact info, product information, configuration capabilities, and quote generation.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Modul Customer Service',en:'Customer Service Module'},d:'e',
+  q:{id:'Modul customer service dalam CRM menyediakan:',en:'Customer service modules in CRM provide:'},
+  options:[{t:{id:'Informasi dan tools untuk menaikkan efisiensi call centre, help desk, dan staf dukungan, termasuk web-based self-service',en:'Information and tools to increase call centre, help desk, and support staff efficiency, including web-based self-service'},c:true},
+   {t:{id:'Aplikasi payroll karyawan',en:'Employee payroll apps'},c:false},
+   {t:{id:'Manajemen kontrak pemasok',en:'Supplier contract management'},c:false},
+   {t:{id:'Kalkulasi BOM produksi',en:'Production BOM calculations'},c:false}],
+  x:{id:'Customer service modules memberi informasi & tools untuk efisiensi call centres, help desk, staf support — CRM dapat juga menyertakan capability self-service berbasis web.',en:'Customer service modules give information and tools to increase call centre, help desk, and support efficiency — CRM may also include web-based self-service capabilities.'}},
+ {week:'w4',weekName:{id:'CRM',en:'CRM'},topic:{id:'Hubungan Pelanggan',en:'Customer Relationships'},d:'m',
+  q:{id:'Karena keunggulan kompetitif berbasis produk inovatif cepat pudar, materi menyatakan bahwa:',en:'Because competitive advantage from innovative products is short-lived, the material states that:'},
+  options:[{t:{id:'Satu-satunya kekuatan kompetitif yang bertahan adalah hubungan dengan pelanggan; kompetisi berpindah dari "siapa menjual terbanyak" ke "siapa memiliki pelanggan"',en:'The only enduring competitive strength is customer relationships; competition shifts from who "sells" the most to who "owns" the customer'},c:true},
+   {t:{id:'Keuntungan kompetitif produk inovatif bertahan selamanya',en:'Innovative-product advantages last forever'},c:false},
+   {t:{id:'Hubungan pelanggan bukan aset penting',en:'Customer relationships are not an important asset'},c:false},
+   {t:{id:'Pesaingan hanya soal harga termurah',en:'Competition is only about the cheapest price'},c:false}],
+  x:{id:'Keunggulan kompetitif dari inovasi sering sangat singkat; perusahaan menyadari hubungan pelanggan adalah aset paling bernilai — "customer comes first".',en:'Innovation-based advantages are often short lived; companies realize customer relationships are their most valuable asset — "the customer comes first."'}}
+);
+
+/* ---------------- WEEK 5 : additional ---------------- */
+Q.push(
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Balance Sheet',en:'Balance Sheet'},d:'e',
+  q:{id:'Balance Sheet (Neraca) menunjukkan:',en:'The Balance Sheet shows:'},
+  options:[{t:{id:'Posisi keuangan perusahaan pada tanggal tertentu — aset, kewajiban, dan modal',en:'The company financial position at a specific date — assets, liabilities, and equity'},c:true},
+   {t:{id:'Laba atau rugi selama satu periode',en:'Profit or loss over a period'},c:false},
+   {t:{id:'Uang kas masuk dan keluar',en:'Cash inflows and outflows'},c:false},
+   {t:{id:'Transaksi penjualan pada hari itu',en:'That day sales transactions'},c:false}],
+  x:{id:'Balance sheet memperlihatkan posisi keuangan pada tanggal tertentu; contohnya: kas, piutang, persediaan, aset tetap, kewajiban, dan modal — dengan rumus ASSETS = LIABILITIES + EQUITY.',en:'The balance sheet shows the financial position at a specific date; examples: cash, receivables, inventory, fixed assets, liabilities, capital — per ASSETS = LIABILITIES + EQUITY.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Income Statement',en:'Income Statement'},d:'e',
+  q:{id:'Income Statement (Laba Rugi) memperlihatkan:',en:'The Income Statement shows:'},
+  options:[{t:{id:'Revenue dan expenses selama satu periode — kinerja operasional ditentukan selisih keduanya',en:'Revenue and expenses over a period — operating performance is their difference'},c:true},
+   {t:{id:'Posisi aset dan kewajiban per tanggal',en:'Assets and liabilities as of a date'},c:false},
+   {t:{id:'Arus kas dari aktivitas investasi',en:'Cash flows from investing activities'},c:false},
+   {t:{id:'Daftar akun Chart of Accounts',en:'The Chart of Accounts list'},c:false}],
+  x:{id:'Income statement memuat revenue dan expenses satu periode: Revenue − Expenses = PROFIT atau LOSS; profit terjadi saat revenue melebihi expenses, dan sebaliknya loss.',en:'The income statement holds revenue and expenses for a period: REVENUE − EXPENSES = PROFIT or LOSS; profit when revenue exceeds expenses, loss when expenses exceed revenue.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Cash Flow',en:'Cash Flow'},d:'m',
+  q:{id:'Tiga bagian utama dalam Cash Flow Statement:',en:'The three main sections of the Cash Flow Statement:'},
+  options:[{t:{id:'Operating, Investing, dan Financing activities',en:'Operating, Investing, and Financing activities'},c:true},
+   {t:{id:'Order, Delivery, dan Invoice',en:'Order, Delivery, and Invoice'},c:false},
+   {t:{id:'Assets, Liabilities, dan Equity',en:'Assets, Liabilities, and Equity'},c:false},
+   {t:{id:'Sales, Production, dan Finance',en:'Sales, Production, and Finance'},c:false}],
+  x:{id:'Cash flow statement memperlihatkan arus masuk-keluar kas suatu periode dengan tiga bagian utama: Operating, Investing, Financing — penting untuk menilai kemampuan generate & pakai kas untuk tagihan dan pertumbuhan.',en:'The cash flow statement shows cash inflows/outflows for a period in three main sections: Operating, Investing, Financing — key to judging cash generation for bills and growth.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Kelompok Akun CoA',en:'CoA Account Groups'},d:'m',
+  q:{id:'Kelompok akun yang tergolong ke dalam Profit & Loss (P&L):',en:'Account groups that belong to the Profit & Loss (P&L):'},
+  options:[{t:{id:'Income & Revenue dan Expenses',en:'Income & Revenue and Expenses'},c:true},
+   {t:{id:'Assets',en:'Assets'},c:false},
+   {t:{id:'Liabilities & Equity',en:'Liabilities & Equity'},c:false},
+   {t:{id:'Seluruh kelompok masuk Balance Sheet',en:'All groups go to the Balance Sheet'},c:false}],
+  x:{id:'Kelompok akun CoA: Assets serta Liabilities & Equity → Balance Sheet; Income & Revenue dan Expenses → Profit & Loss.',en:'CoA account groups: Assets and Liabilities & Equity go to the Balance Sheet; Income & Revenue and Expenses go to the P&L.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'General Ledger',en:'General Ledger'},d:'e',
+  q:{id:'General Ledger (GL) dalam ERP Finance adalah:',en:'In ERP Finance, the General Ledger (GL) is:'},
+  options:[{t:{id:'Repositori sentral untuk jurnal dan saldo seluruh akun perusahaan',en:'The central repository for journal entries and account balances'},c:true},
+   {t:{id:'Daftar calon karyawan baru',en:'A list of new job candidates'},c:false},
+   {t:{id:'Basis data kondisi mesin pabrik',en:'A factory machine-condition database'},c:false},
+   {t:{id:'Aplikasi absensi harian',en:'A daily attendance app'},c:false}],
+  x:{id:'GL adalah repositori sentral akun finansial: transaksi subledger/fungsi operasional menghasilkan posting ke GL; dipakai untuk melihat saldo & jurnal, menyusun laporan, dan menelusuri data ke dokumen sumber (drill-down/audit trail).',en:'GL is the central financial-repository: subledger and operational transactions post to the GL; it is used to view balances and journals, prepare statements, and drill down to source documents (audit trail).'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Alur AP',en:'AP Flow'},d:'m',
+  q:{id:'Urutan transaksi Accounts Payable (AP) yang benar:',en:'The correct Accounts Payable (AP) transaction sequence:'},
+  options:[{t:{id:'Purchase Order → Goods Receipt → Supplier Invoice → Invoice Verification → Payment',en:'Purchase Order → Goods Receipt → Supplier Invoice → Invoice Verification → Payment'},c:true},
+   {t:{id:'Payment → Purchase Order → Goods Receipt',en:'Payment → Purchase Order → Goods Receipt'},c:false},
+   {t:{id:'Supplier Invoice → Purchase Order → Payment',en:'Supplier Invoice → Purchase Order → Payment'},c:false},
+   {t:{id:'Goods Receipt → Purchase Order → Invoice Verification',en:'Goods Receipt → Purchase Order → Invoice Verification'},c:false}],
+  x:{id:'Alur AP: PO → penerimaan barang → invoice pemasok → verifikasi invoice → pembayaran. Contoh: pembelian bahan baku kredit — kewajiban tercatat saat invoice diverifikasi; kas berkurang saat dibayar.',en:'The AP flow: PO → goods receipt → supplier invoice → invoice verification → payment. Example: a credit raw-material purchase — the liability is recorded at invoice verification; cash decreases when paid.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Pembayaran Pelanggan',en:'Customer Payment'},d:'m',
+  q:{id:'Pelanggan membayar piutang Rp5 juta. Jurnal yang tepat:',en:'A customer pays a Rp5 million receivable. The correct entry:',},
+  options:[{t:{id:'Debit Cash dan Credit Accounts Receivable — kas naik, piutang turun',en:'Debit Cash and Credit Accounts Receivable — cash up, receivables down'},c:true},
+   {t:{id:'Debit Accounts Receivable dan Credit Cash',en:'Debit Accounts Receivable and Credit Cash'},c:false},
+   {t:{id:'Debit Expense dan Credit Cash',en:'Debit Expense and Credit Cash'},c:false},
+   {t:{id:'Debit Revenue dan Credit Accounts Receivable',en:'Debit Revenue and Credit Accounts Receivable'},c:false}],
+  x:{id:'Contoh di slide: menerima pembayaran piutang → Debit: Cash Rp5 juta; Credit: Accounts Receivable Rp5 juta — kas bertambah, piutang berkurang.',en:'From the slide: receiving a receivable payment → Debit: Cash Rp5 million; Credit: Accounts Receivable Rp5 million — cash up, receivables down.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Integrasi ke GL',en:'GL Integration'},d:'m',
+  q:{id:'Prinsip integrasi ERP pada data keuangan:',en:'The ERP principle for financial data integration:'},
+  options:[{t:{id:'Satu transaksi operasional dapat memengaruhi data keuangan tanpa entri ulang manual',en:'A single operational transaction affects financial data without manual re-entry'},c:true},
+   {t:{id:'Semua transaksi harus diinput ulang oleh akuntan',en:'Every transaction must be re-entered by accountants'},c:false},
+   {t:{id:'Transaksi operasional tidak pernah menyentuh GL',en:'Operational transactions never touch the GL'},c:false},
+   {t:{id:'Hanya transaksi mingguan yang terposting',en:'Only weekly transactions are posted'},c:false}],
+  x:{id:'Prinsip ERP Finance: single operational transaction → financial data tanpa re-entry. Contoh integrasi: Procurement → AP → GL; Sales → AR → GL; Assets → Asset Accounting → GL; Bank → Cash/Bank → GL.',en:'ERP Finance principle: a single operational transaction feeds financial data with no re-entry. Integration examples: Procurement → AP → GL; Sales → AR → GL; Assets → Asset Accounting → GL; Bank → Cash/Bank → GL.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Sisi Debit–Kredit',en:'Debit–Credit Sides'},d:'m',
+  q:{id:'Akun Revenue umumnya bertambah pada sisi:',en:'Revenue accounts generally increase on the:'},
+  options:[{t:{id:'Credit side',en:'Credit side'},c:true},
+   {t:{id:'Debit side',en:'Debit side'},c:false},
+   {t:{id:'Keduanya sekaligus',en:'Both at once'},c:false},
+   {t:{id:'Tidak pernah dibukukan',en:'They are never recorded'},c:false}],
+  x:{id:'Debit/kredit bukan sekadar uang masuk/keluar — dampaknya bergantung jenis akun: assets naik di debit; liabilities & equity naik di kredit; revenue umumnya naik di kredit; expenses umumnya naik di debit.',en:'Debit/credit is not simply money in/out — the effect depends on the account type: assets increase on debit; liabilities and equity on credit; revenue generally on credit; expenses on debit.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Siklus Akuntansi',en:'Accounting Cycle'},d:'m',
+  q:{id:'Urutan siklus akuntansi yang benar:',en:'The correct accounting cycle order:'},
+  options:[{t:{id:'Transaction → Document → Journal → Ledger → Adjust → Report',en:'Transaction → Document → Journal → Ledger → Adjust → Report'},c:true},
+   {t:{id:'Report → Journal → Transaction',en:'Report → Journal → Transaction'},c:false},
+   {t:{id:'Journal → Report → Document → Ledger',en:'Journal → Report → Document → Ledger'},c:false},
+   {t:{id:'Ledger → Transaction → Adjust → Document',en:'Ledger → Transaction → Adjust → Document'},c:false}],
+  x:{id:'Siklus akuntansi (disederhanakan): Transformasi → dokumen sumber → jurnal → buku besar (ledger) → penyesuaian → laporan keuangan; di ERP langkah-langkah ini terjadi otomatis/terintegrasi saat transaksi terposting.',en:'The simplified accounting cycle: transaction → source document → journal → ledger → adjust → financial statements; in ERP these steps occur automatically/integrated as transactions post.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Definisi Akuntansi',en:'Accounting Definition'},d:'e',
+  q:{id:'Akuntansi adalah process of:',en:'Accounting is the process of:'},
+  options:[{t:{id:'Mengidentifikasi, mencatat, mengklasifikasi, meringkas, dan mengomunikasikan transaksi ekonomi menjadi informasi berguna',en:'Identifying, recording, classifying, summarizing, and communicating economic transactions into useful information'},c:true},
+   {t:{id:'Mengelola investasi jangka panjang saja',en:'Managing long-term investments only'},c:false},
+   {t:{id:'Merancang kampanye pemasaran',en:'Designing marketing campaigns'},c:false},
+   {t:{id:'Menjadwalkan produksi pabrik',en:'Scheduling factory production'},c:false}],
+  x:{id:'Akuntansi: mengidentifikasi, mencatat, mengklasifikasi, meringkas, dan komunikasi transaksi ekonomi — mengubah transaksi bisnis menjadi informasi keuangan terstruktur untuk reporting, control, evaluasi, planning, dan decision.',en:'Accounting: identifying, recording, classifying, summarizing, and communicating economic transactions — turning business transactions into structured financial information for reporting, control, evaluation, planning, and decisions.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Akuntansi vs Finance',en:'Accounting vs Finance'},d:'e',
+  q:{id:'Perbedaan Accounting dan Finance menurut materi:',en:'The Accounting vs Finance difference per the material:'},
+  options:[{t:{id:'Accounting mencatat dan melaporkan apa yang terjadi; Finance menggunakan informasi itu untuk planning dan keputusan',en:'Accounting records and reports what happened; Finance uses that information for planning and decisions'},c:true},
+   {t:{id:'Keduanya identik tanpa perbedaan',en:'They are identical with no difference'},c:false},
+   {t:{id:'Finance mencatat, Accounting mengambil keputusan',en:'Finance records; Accounting decides'},c:false},
+   {t:{id:'Akuntansi tidak berhubungan dengan ERP',en:'Accounting is unrelated to ERP'},c:false}],
+  x:{id:'Accounting menjawab "What happened?" (records & reports); Finance menjawab "What should we do based on accounting reports?" — dan ERP menghubungkan data keduanya.',en:'Accounting answers "What happened?" (records and reports); Finance asks "What should we do based on accounting reports?" — ERP connects both data flows.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Tipe Informasi Akuntansi',en:'Accounting Information Types'},d:'m',
+  q:{id:'Jenis informasi akuntansi yang menganalisis biaya produk, aktivitas, atau departemen untuk kontrol dan penentuan harga pokok:',en:'The accounting information type analyzing product, activity, or department costs for control and costing:'},
+  options:[{t:{id:'Cost Accounting',en:'Cost Accounting'},c:true},
+   {t:{id:'Financial Accounting',en:'Financial Accounting'},c:false},
+   {t:{id:'Management Accounting',en:'Management Accounting'},c:false},
+   {t:{id:'Tax Accounting',en:'Tax Accounting'},c:false}],
+  x:{id:'Financial accounting = pelaporan posisi & kinerja ke stakeholder internal/eksternal (neraca, laba rugi, cashflow); management accounting = planning, control, costing, budgeting internal; cost accounting = identifikasi & analisis biaya objek.',en:'Financial accounting = reporting position and performance to internal/external stakeholders; management accounting = internal planning, control, costing, budgeting; cost accounting = identifying and analyzing costs of cost objects.'}},
+ {week:'w5',weekName:{id:'Akuntansi',en:'Accounting'},topic:{id:'Depresiasi',en:'Depreciation'},d:'m',
+  q:{id:'Dalam Asset Accounting, depresiasi adalah:',en:'In Asset Accounting, depreciation is:'},
+  options:[{t:{id:'Alokasi nilai aset menjadi beban sepanjang masa manfaat sesuai metode yang dipakai perusahaan',en:'Allocating asset value as expense over its useful life per the applicable method'},c:true},
+   {t:{id:'Menuliskan seluruh nilai aset turun sekaligus saat dibeli',en:'Writing down the entire asset value at purchase'},c:false},
+   {t:{id:'Investasi pembelian aset baru',en:'Investing in new asset purchases'},c:false},
+   {t:{id:'Pembayaran tagihan listrik kantor',en:'Paying office utility bills'},c:false}],
+  x:{id:'Daur hidup aset di ERP: Acquisition (pembelian mesin Rp500 juta tercatat) → Depreciation (nilai dialokasikan sebagai beban sepanjang masa manfaat sesuai metode) → Disposal (book value dihitung saat dijual/dipensiunkan).',en:'The ERP asset lifecycle: Acquisition (a Rp500 million machine purchase recorded) → Depreciation (value allocated as expense over useful life per method) → Disposal (book value calculated when sold or retired).'}},
+ {week:'w5',weekName:{id:'Keuangan',en:'Finance'},topic:{id:'Procure-to-Pay',en:'Procure-to-Pay'},d:'m',
+  q:{id:'Alur end-to-end Procure-to-Pay yang benar:',en:'The correct end-to-end Procure-to-Pay flow:'},
+  options:[{t:{id:'Need → PR/PO → Goods Receipt → Supplier Invoice → AP → Payment',en:'Need → PR/PO → Goods Receipt → Supplier Invoice → AP → Payment'},c:true},
+   {t:{id:'Payment → Supplier Invoice → Need',en:'Payment → Supplier Invoice → Need'},c:false},
+   {t:{id:'AP → Need → Goods Receipt → Payment',en:'AP → Need → Goods Receipt → Payment'},c:false},
+   {t:{id:'Order → Delivery → AR → GL',en:'Order → Delivery → AR → GL'},c:false}],
+  x:{id:'Procure-to-Pay: need dikelola procurement (PR/PO) → barang diterima → invoice pemasok membentuk AP (kewajiban) → pembayaran mengurangi kas → GL menjadi catatan sentral.',en:'Procure-to-Pay: need managed by procurement (PR/PO) → goods received → supplier invoice creates the AP liability → payment reduces cash → GL is the central record.'}}
+);
+
+/* ---------------- WEEK 6 : additional ---------------- */
+Q.push(
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Perencanaan SDM',en:'HR Planning'},d:'e',
+  q:{id:'Isi pokok human resource planning pada peran strategis HR:',en:'Human resource planning, as part of HR strategic responsibility, means:'},
+  options:[{t:{id:'Menentukan jumlah dan jenis karyawan yang dibutuhkan organisasi untuk mencapai tujuannya',en:'Determining the numbers and types of employees required to meet organizational objectives'},c:true},
+   {t:{id:'Mengatur jadwal produksi pabrik',en:'Setting the factory production schedule'},c:false},
+   {t:{id:'Menyusun daftar pemasok bahan baku',en:'Listing raw-material suppliers'},c:false},
+   {t:{id:'Merancang iklan produk baru',en:'Designing new product ads'},c:false}],
+  x:{id:'Elemen penting peran strategis HR: human resource planning — mengidentifikasi angka dan tipe karyawan yang dibutuhkan untuk mencapai objektif organisasi.',en:'A key element of HR strategic responsibility: human resource planning — identifying the numbers and types of employees the organization will require to meet its objectives.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Evidence-based HR',en:'Evidence-based HR'},d:'m',
+  q:{id:'Evidence-based HR adalah:',en:'Evidence-based HR refers to:'},
+  options:[{t:{id:'Menunjukkan bahwa praktik HR berpengaruh positif ke laba atau kunci stakeholder (karyawan, pelanggan, komunitas, pemegang saham)',en:'Demonstrating HR practices positively influence profits or key stakeholders (employees, customers, community, shareholders)'},c:true},
+   {t:{id:'Rekrutmen berbasis keberuntungan',en:'Recruitment based on luck'},c:false},
+   {t:{id:'Penggajian tanpa bukti kerja',en:'Paying salaries without work evidence'},c:false},
+   {t:{id:'Penilaian karyawan tiap 5 tahun',en:'Evaluating employees every 5 years'},c:false}],
+  x:{id:'Kontribusi strategis HR: evidence-based HR — membuktikan (dengan bukti) bahwa praktik SDM berpengaruh positif terhadap laba dan stakeholder utama perusahaan.',en:'A key strategic HR contribution: evidence-based HR — demonstrating that HR practices positively influence profit and key company stakeholders.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'CSR',en:'CSR'},d:'m',
+  q:{id:'Corporate social responsibility (CSR) adalah:',en:'Corporate social responsibility (CSR) describes:'},
+  options:[{t:{id:'Komitmen perusahaan untuk memenuhi kebutuhan para stakeholdernya',en:'A company commitment to meeting the needs of its stakeholders'},c:true},
+   {t:{id:'Kewajiban membayar pajak tahunan saja',en:'Paying annual taxes only'},c:false},
+   {t:{id:'Program bonus bulatan karyawan',en:'An employee bonus circle program'},c:false},
+   {t:{id:'Strategi memasuki pasar ekspor',en:'A strategy to enter export markets'},c:false}],
+  x:{id:'Tantangan strategis yang semakin digarap perusahaan: profitabel sekaligus bertanggung jawab sosial — CSR menjabarkan komitmen memenuhi kebutuhan stakeholder.',en:'A strategic challenge for many companies: profitable yet socially responsible — CSR describes the commitment to meeting stakeholder needs.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Kualitas Human Capital',en:'Human Capital Qualities'},d:'m',
+  q:{id:'Yang BUKAN merupakan kualitas human resources sebagai keunggulan kompetitif berkelanjutan:',en:'Which is NOT among the qualities making human resources a sustainable competitive advantage:'},
+  options:[{t:{id:'Mudah ditiru oleh pesaing',en:'Easily imitated by competitors'},c:true},
+   {t:{id:'Valuable (bernilai)',en:'Valuable'},c:false},
+   {t:{id:'Rare (tidak umum)',en:'Rare'},c:false},
+   {t:{id:'No good substitutes (tak ada pengganti yang setara)',en:'No good substitutes'},c:false}],
+  x:{id:'Empat kualitas HR sebagai keunggulan kompetitif: valuable, rare, cannot be imitated, dan no good substitutes — maka "mudah ditiru" justru bukan kualitasnya.',en:'The four HR qualities for sustainable competitive advantage: valuable, rare, cannot be imitated, and no good substitutes — so being "easily imitated" is the opposite.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Human Capital',en:'Human Capital'},d:'e',
+  q:{id:'Kualitas "human resources are rare" bermakna:',en:'The quality "human resources are rare" means:'},
+  options:[{t:{id:'Orang dengan keterampilan dan pengetahuan tingkat tinggi tidak umum ditemukan',en:'People with high levels of needed skills and knowledge are not common'},c:true},
+   {t:{id:'Karyawan jarang masuk kerja',en:'Employees rarely attend work'},c:false},
+   {t:{id:'Lowongan kerja terbuka jarang',en:'Job openings are rarely posted'},c:false},
+   {t:{id:'Pelatihan jarang diselenggarakan',en:'Training is rarely provided'},c:false}],
+  x:{id:'Rare: seseorang dengan tingkat skill dan knowledge yang dibutuhkan tidak umum — inilah yang menambah keunikan human capital.',en:'Rare: individuals with high levels of the needed skills and knowledge are not common — adding uniqueness to human capital.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Tiga Peran HR',en:'Three HR Roles'},d:'e',
+  q:{id:'Tiga responsibility besar departemen HR:',en:'The three major HR department responsibilities:'},
+  options:[{t:{id:'Administrative services and transactions, business partner services, strategic partner',en:'Administrative services and transactions, business partner services, strategic partner'},c:true},
+   {t:{id:'Produksi, pemasaran, logistik',en:'Production, marketing, logistics'},c:false},
+   {t:{id:'Audit, perpajakan, treasury',en:'Audit, taxation, treasury'},c:false},
+   {t:{id:'Pembelian, pengiriman, penjualan',en:'Purchasing, delivery, sales'},c:false}],
+  x:{id:'HR: (1) administrative services and transactions — tugas administratif efisien & berkualitas; (2) business partner services — sistem HR efektif untuk tujuan organisasi; (3) strategic partner — kontribusi ke strategi lewat pemahaman SDM.',en:'HR: (1) administrative services and transactions — efficient, quality admin tasks; (2) business partner services — effective HR systems for organizational goals; (3) strategic partner — contributing to strategy via HR understanding.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Business Partner Services',en:'Business Partner Services'},d:'m',
+  q:{id:'Isi pokok business partner services pada departemen HR:',en:'Business partner services in the HR department involve:'},
+  options:[{t:{id:'Mengembangkan sistem HR efektif yang membantu organisasi menarik, mempertahankan, dan mengembangkan orang dengan skill yang dibutuhkan',en:'Developing effective HR systems helping the organization attract, keep, and develop people with the needed skills'},c:true},
+   {t:{id:'Menjual layanan HR ke perusahaan lain',en:'Selling HR services to other companies'},c:false},
+   {t:{id:'Menjadi mitra bisnis dalam acara sponsor',en:'Partnering for sponsorship events'},c:false},
+   {t:{id:'Mengelola mitra pemasok bahan baku',en:'Managing raw-material suppliers'},c:false}],
+  x:{id:'Business partner services: membangun sistem HR yang efektif agar organisasi mencapai tujuan menarik, mempertahankan, dan mengembangkan people dengan skill yang dibutuhkannya.',en:'Business partner services: developing effective HR systems to help meet goals for attracting, keeping, and developing people with the needed skills.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Strategic Partner',en:'Strategic Partner'},d:'m',
+  q:{id:'Syarat agar ideas strategis dari HR efektif, sebagaimana peran strategic partner:',en:'For HR strategic ideas to be effective, HR people must:'},
+  options:[{t:{id:'Memahami bisnis, industri, dan kompetitor perusahaan',en:'Understand the business, the industry, and its competitors'},c:true},
+   {t:{id:'Hanya menguasai software perkantoran',en:'Only master office software'},c:false},
+   {t:{id:'Menolak semua teknologi baru',en:'Reject all new technology'},c:false},
+   {t:{id:'Berhenti melakukan pelatihan',en:'Stop conducting training'},c:false}],
+  x:{id:'Strategic partner: HR berkontribusi ke strategi lewat pemahaman SDM eksisting & yang dibutuhkan serta cara praktik HR memberi keunggulan kompetitif — untuk itu HR harus paham bisnis, industri, dan kompetitor.',en:'Strategic partner: HR contributes to strategy by understanding existing and needed human resources and how HR practices create competitive advantage — requiring business, industry, and competitor knowledge.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Rekrutmen vs Seleksi',en:'Recruitment vs Selection'},d:'e',
+  q:{id:'Perbedaan Recruitment dan Selection:',en:'The difference between Recruitment and Selection:'},
+  options:[{t:{id:'Recruitment mencari calon pelamar potensial; Selection mengidentifikasi pelamar dengan knowledge, skills, abilities yang dibutuhkan',en:'Recruitment seeks potential applicants; Selection identifies applicants with the necessary knowledge, skills, and abilities'},c:true},
+   {t:{id:'Selection mencari pelamar; Recruitment memecat karyawan',en:'Selection seeks applicants; Recruitment terminates employees'},c:false},
+   {t:{id:'Keduanya sama persis',en:'They are exactly the same'},c:false},
+   {t:{id:'Recruitment menghitung gaji; Selection menentukan jadwal shift',en:'Recruitment computes salaries; Selection sets shift schedules'},c:false}],
+  x:{id:'Recruitment: proses organisasi mencari calon pelamar potensial; Selection: proses mengidentifikasi pelamar dengan knowledge, skills, abilities, dan characteristics lain yang membantu organisasi mencapai tujuan.',en:'Recruitment: the process of seeking applicants for potential employment; Selection: identifying applicants with the necessary knowledge, skills, abilities, and other characteristics to achieve organizational goals.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Training vs Development',en:'Training vs Development'},d:'m',
+  q:{id:'Perbedaan Training dan Development:',en:'The difference between Training and Development:'},
+  options:[{t:{id:'Training = upaya terencana agar karyawan pelajari pengetahuan/skill/perilaku untuk pekerjaan saat ini; Development = mempersiapkan berbagai pekerjaan baru/eksisting termasuk tuntutan klien',en:'Training = planned effort to learn job-related knowledge/skills/behavior; Development = preparing for a variety of new or existing jobs, including client demands'},c:true},
+   {t:{id:'Training untuk calon pelamar; Development untuk pelanggan',en:'Training is for applicants; Development is for customers'},c:false},
+   {t:{id:'Keduanya sama dan dipakai bergantian',en:'They are the same and interchangeable'},c:false},
+   {t:{id:'Development hanya menyangkut gaji',en:'Development only concerns pay'},c:false}],
+  x:{id:'Training: planned effort untuk mempelajari job-related knowledge, skills, behavior (contoh: safety training). Development: membangun kemampuan menghadapi ragam pekerjaan baru/eksisting, termasuk tuntutan client & customer.',en:'Training: planned effort to enable learning of job-related knowledge, skills, and behavior (e.g., safety training). Development: building abilities to meet challenges of varied new or existing jobs, including client and customer demands.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Relasi Karyawan',en:'Employee Relations'},d:'e',
+  q:{id:'Bentuk menjaga positive employee relations yang disebutkan materi:',en:'A form of maintaining positive employee relations mentioned in the material:'},
+  options:[{t:{id:'Menyusun dan menyebarkan employee handbook serta publikasi perusahaan (newsletter bulanan/intranet)',en:'Preparing and distributing employee handbooks and company publications (monthly newsletter/intranet)'},c:true},
+   {t:{id:'Menghapus seluruh kebijakan perusahaan',en:'Removing all company policies'},c:false},
+   {t:{id:'Membatasi komunikasi antar karyawan',en:'Restricting employee communication'},c:false},
+   {t:{id:'Menutup situs intranet perusahaan',en:'Closing the company intranet site'},c:false}],
+  x:{id:'Fungsi maintaining positive employee relations: menyusun & menyebarkan employee handbook berisi kebijakan perusahaan, dan di organisasi besar publikasi seperti newsletter bulanan atau situs intranet.',en:'Maintaining positive employee relations includes preparing and distributing employee handbooks detailing policies, plus large-organization publications like a monthly newsletter or intranet site.'}},
+ {week:'w6',weekName:{id:'HRM',en:'HRM'},topic:{id:'Kepatuhan Hukum',en:'Labor Law Compliance'},d:'m',
+  q:{id:'Wilayah peraturan pemerintah yang wajib dipatuhi HR terkait perlakuan karyawan antara lain:',en:'Government regulations on employee treatment that HR must comply with include:'},
+  options:[{t:{id:'Equal employment opportunity, keselamatan & kesehatan kerja, gaji & tunjangan, privasi karyawan, job security',en:'Equal employment opportunity, safety and health, pay and benefits, employee privacy, and job security'},c:true},
+   {t:{id:'Warna seragam dan rute berangkat kerja',en:'Uniform colors and commuting routes'},c:false},
+   {t:{id:'Pilihan menu kantin perusahaan',en:'Company cafeteria menu choices'},c:false},
+   {t:{id:'Jumlah tanaman di gedung kantor',en:'The number of plants in the office building'},c:false}],
+  x:{id:'Pemerintah punya banyak aturan atas perlakuan karyawan: equal employment opportunity, employee safety & health, pay & benefits, employee privacy, dan job security — HR wajib memastikan kepatuhannya.',en:'Governments regulate employee treatment extensively: equal employment opportunity, safety and health, pay and benefits, privacy, and job security — HR must ensure compliance.'}}
+);
+
 /* ============ SESSION ENGINE ============ */
-Q.forEach((q,i)=>{ q.sid = q.week + ':' + i; });
+const MODERATE_SIDS = new Set(['w2:9','w2:13','w5:31']);
+Q.forEach((q,i)=>{ q.sid = q.week + ':' + i; if(!q.d) q.d = MODERATE_SIDS.has(q.sid) ? 'm' : 'e'; });
 let state = { lang: localStorage.getItem('fc_lang') || 'id' };
 let session = null;
 const counts = JSON.parse(localStorage.getItem('se_counts') || '{}');
 if(Object.keys(counts).length===0){ WEEKS.forEach(w=>{ counts[w.v]=5; }); }
+let mode = localStorage.getItem('se_mode') || 'custom';
+let exam = JSON.parse(localStorage.getItem('se_exam') || '{"e":50,"m":25}');
 
 const CAP = {};
 WEEKS.forEach(w => { CAP[w.v] = Q.filter(q=>q.week===w.v).length; });
@@ -465,11 +1077,28 @@ function show(id){
 function openSetup(){ buildSetup(); show('viewSetup'); }
 
 function buildSetup(){
-  document.getElementById('suTitle').textContent = UI[state.lang].suTitle;
-  document.getElementById('suDesc').textContent = UI[state.lang].suDesc;
-  document.getElementById('pC').textContent = UI[state.lang].pC;
-  document.getElementById('lblTotal').textContent = UI[state.lang].total;
-  document.getElementById('btnStart').textContent = UI[state.lang].start;
+  const st = UI[state.lang];
+  document.getElementById('suTitle').textContent = st.suTitle;
+  document.getElementById('suDesc').textContent = st.suDesc;
+  document.getElementById('exDesc').textContent = st.exDesc;
+  document.getElementById('pC').textContent = st.pC;
+  document.getElementById('lblTotal').textContent = st.total;
+  document.getElementById('lblTotalX').textContent = st.total;
+  document.getElementById('lblEasy').textContent = st.eEasy;
+  document.getElementById('lblMod').textContent = st.eMod;
+  document.getElementById('capEasy').textContent = st.eCapE;
+  document.getElementById('capMod').textContent = st.eCapM;
+  document.getElementById('mcCName').textContent = st.mcC;
+  document.getElementById('mcCSub').textContent = st.mcCS;
+  document.getElementById('mcEName').textContent = st.mcE;
+  document.getElementById('mcESub').textContent = st.mcES;
+  document.getElementById('btnStart').textContent = st.start;
+  const isExam = mode==='exam';
+  document.getElementById('customArea').hidden = isExam;
+  document.getElementById('examArea').hidden = !isExam;
+  document.getElementById('mcCustom').classList.toggle('on', !isExam);
+  document.getElementById('mcExam').classList.toggle('on', isExam);
+  syncExamInputs();
   const list = document.getElementById('secList');
   list.innerHTML = '';
   WEEKS.forEach(w=>{
@@ -485,6 +1114,25 @@ function buildSetup(){
   });
   updateTotal();
 }
+function setMode(m){
+  mode = m; localStorage.setItem('se_mode', m);
+  const isExam = m==='exam';
+  document.getElementById('customArea').hidden = isExam;
+  document.getElementById('examArea').hidden = !isExam;
+  document.getElementById('mcCustom').classList.toggle('on', !isExam);
+  document.getElementById('mcExam').classList.toggle('on', isExam);
+  updateTotal();
+}
+function syncExamInputs(){
+  ['e','m'].forEach(k=>{
+    const r = document.getElementById('rng_'+k), c = document.getElementById('cnt_'+k);
+    if(r){ r.value = exam[k]; c.value = exam[k]; }
+  });
+}
+function onExamRange(k, raw){ exam[k] = dflt0(raw); syncExamInputs(); saveExam(); updateTotal(); }
+function onExamNum(k, el){ exam[k] = dflt0(el.value); syncExamInputs(); saveExam(); updateTotal(); }
+function saveExam(){ localStorage.setItem('se_exam', JSON.stringify(exam)); }
+function examPreset(){ exam.e = 50; exam.m = 25; syncExamInputs(); saveExam(); updateTotal(); }
 function dflt(v){ return Math.max(0, Math.min(100, counts[v] ?? 5)); }
 function dflt0(x){ const n = parseInt(x,10); return isNaN(n) ? 0 : Math.max(0, Math.min(100, n)); }
 function syncInputs(v){ const r = document.getElementById('rng_'+v), c = document.getElementById('cnt_'+v); if(r){ r.value = counts[v]; c.value = counts[v]; } }
@@ -496,46 +1144,63 @@ function preset(n){
   saveCounts(); updateTotal();
 }
 function updateTotal(){
-  let total = 0;
-  WEEKS.forEach(w=>{ total += dflt(w.v); });
-  document.getElementById('totalNum').textContent = total;
+  let total;
+  if(mode==='exam'){
+    total = (exam.e||0) + (exam.m||0);
+    document.getElementById('examNum').textContent = total;
+  } else {
+    total = 0;
+    WEEKS.forEach(w=>{ total += dflt(w.v); });
+    document.getElementById('totalNum').textContent = total;
+  }
   const bs = document.getElementById('btnStart');
   bs.disabled = total===0;
   bs.textContent = total>0 ? `${UI[state.lang].start} · ${total}` : UI[state.lang].start;
 }
 
+function drawRot(pool, n, seen){
+  const taken = [];
+  let need = n;
+  while(need>0){
+    pool.sort((a,b)=>(seen[a.sid]||0)-(seen[b.sid]||0));
+    let s = 0;
+    for(let i=1;i<=pool.length;i++){
+      if(i===pool.length || (seen[pool[i].sid]||0)!==(seen[pool[s].sid]||0)){
+        for(let e1=i-1; e1>s; e1--){ const j=s+randInt(0,e1-s); const tmp=pool[e1]; pool[e1]=pool[j]; pool[j]=tmp; }
+        s=i;
+      }
+    }
+    const take = pool.slice(0, Math.min(need, pool.length));
+    take.forEach(q=>{ seen[q.sid] = (seen[q.sid]||0)+1; taken.push(q); });
+    need -= take.length;
+    if(take.length===0) break;
+  }
+  return taken;
+}
+
 function startSession(){
   const seen = JSON.parse(localStorage.getItem('se_seen') || '{}');
   const deck = [];
-  WEEKS.forEach(w=>{
-    const n = dflt(w.v);
-    if(n<=0) return;
-    let need = n;
-    while(need>0){
-      const pool = Q.filter(q=>q.week===w.v).slice();
-      // least-seen questions first, shuffled within tiers -> fair rotation
-      pool.sort((a,b)=>(seen[a.sid]||0)-(seen[b.sid]||0));
-      let s = 0;
-      for(let i=1;i<=pool.length;i++){
-        if(i===pool.length || (seen[pool[i].sid]||0)!==(seen[pool[s].sid]||0)){
-          for(let e1=i-1; e1>s; e1--){ const j=s+randInt(0,e1-s); const tmp=pool[e1]; pool[e1]=pool[j]; pool[j]=tmp; }
-          s=i;
-        }
-      }
-      const take = pool.slice(0, Math.min(need, pool.length));
-      take.forEach(q=>{
-        seen[q.sid] = (seen[q.sid]||0)+1;
-        deck.push({q, key:w.v, answered:false, ok:false, skipped:false});
-      });
-      need -= take.length;
-      if(take.length===0) break;
-    }
-  });
+  if(mode==='exam'){
+    drawRot(Q.filter(q=>q.d==='e'), exam.e||0, seen).forEach(q=>deck.push({q, key:q.d, answered:false, ok:false, skipped:false}));
+    drawRot(Q.filter(q=>q.d==='m'), exam.m||0, seen).forEach(q=>deck.push({q, key:q.d, answered:false, ok:false, skipped:false}));
+  } else {
+    WEEKS.forEach(w=>{
+      const n = dflt(w.v);
+      if(n<=0) return;
+      drawRot(Q.filter(q=>q.week===w.v), n, seen).forEach(q=>deck.push({q, key:w.v, answered:false, ok:false, skipped:false}));
+    });
+  }
   localStorage.setItem('se_seen', JSON.stringify(seen));
   if(deck.length===0) return;
   shuffle(deck);
-  session = { deck, idx:0, stats:{} };
-  WEEKS.forEach(w=>{ session.stats[w.v]={ok:0,ans:0,cnt:0}; });
+  session = { deck, idx:0, stats:{}, dims:[] };
+  if(mode==='exam'){
+    session.dims = [{v:'e', id:'Mudah', en:'Easy'}, {v:'m', id:'Sedang', en:'Moderate'}];
+  } else {
+    session.dims = WEEKS;
+  }
+  session.dims.forEach(d=>{ session.stats[d.v]={ok:0,ans:0,cnt:0}; });
   deck.forEach(d=>{ session.stats[d.key].cnt++; });
   state.answered=false; state.picked=0;
   document.getElementById('nextBtn').textContent = UI[state.lang].next;
@@ -550,7 +1215,9 @@ function renderCard(){
   if(!session) return;
   const item = session.deck[session.idx];
   const q = item.q;
-  document.getElementById('topic').textContent = t(q.topic) + ' · ' + t(q.weekName);
+  let pill = t(q.topic) + ' · ' + t(q.weekName);
+  if(mode==='exam') pill += ' · ' + (q.d==='m' ? UI[state.lang].difM : UI[state.lang].difE);
+  document.getElementById('topic').textContent = pill;
   document.getElementById('question').innerHTML = t(q.q);
   const optsEl = document.getElementById('options');
   optsEl.innerHTML = '';
@@ -611,9 +1278,9 @@ function endSession(){
   document.getElementById('enAcc').textContent = answered ? Math.round(ok/answered*100)+'%' : '—';
   document.getElementById('enAccLbl').textContent = st.enAccLbl + ' · ' + answered + ' ' + st.enDetail;
   const rows = document.getElementById('enRows');
-  rows.innerHTML = WEEKS.filter(w=>session.stats[w.v].cnt>0).map(w=>{
-    const s = session.stats[w.v];
-    return `<tr><td>${state.lang==='id'?w.id:w.en}</td><td>${s.ans ? s.ok+'/'+s.ans : '—'}</td></tr>`;
+  rows.innerHTML = session.dims.filter(d=>session.stats[d.v].cnt>0).map(d=>{
+    const s = session.stats[d.v];
+    return `<tr><td>${state.lang==='id'?d.id:d.en}</td><td>${s.ans ? s.ok+'/'+s.ans : '—'}</td></tr>`;
   }).join('');
   show('viewEnd');
 }
@@ -632,6 +1299,16 @@ function applyLang(){
   document.getElementById('pC').textContent = UI[state.lang].pC;
   document.getElementById('lblTotal').textContent = UI[state.lang].total;
   document.getElementById('btnStart').textContent = UI[state.lang].start;
+  document.getElementById('exDesc').textContent = UI[state.lang].exDesc;
+  document.getElementById('lblTotalX').textContent = UI[state.lang].total;
+  document.getElementById('lblEasy').textContent = UI[state.lang].eEasy;
+  document.getElementById('lblMod').textContent = UI[state.lang].eMod;
+  document.getElementById('capEasy').textContent = UI[state.lang].eCapE;
+  document.getElementById('capMod').textContent = UI[state.lang].eCapM;
+  document.getElementById('mcCName').textContent = UI[state.lang].mcC;
+  document.getElementById('mcCSub').textContent = UI[state.lang].mcCS;
+  document.getElementById('mcEName').textContent = UI[state.lang].mcE;
+  document.getElementById('mcESub').textContent = UI[state.lang].mcES;
   document.getElementById('nextBtn').textContent = UI[state.lang].next;
   document.getElementById('btnSkip').textContent = UI[state.lang].skip;
   document.getElementById('btnEnd').textContent = UI[state.lang].end;
