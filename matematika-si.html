@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Card Matematika SI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  header h1 { font-size: 1.5rem; margin-bottom: 6px; letter-spacing: 0.5px; }
+  header p { font-size: 0.85rem; opacity: 0.9; }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    font-size: 0.85rem;
+    color: #555;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .stats span { font-weight: 600; color: #111; }
+  .flashcard {
+    min-height: 280px;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .question-text {
+    font-size: 1.25rem;
+    color: #222;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    font-weight: 500;
+  }
+  .math {
+    font-family: 'Cambria Math', 'Cambria', 'Times New Roman', serif;
+    font-style: italic;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  button.opt {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+    border: 2px solid #e2e8f0;
+    background: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  button.opt:hover { border-color: #4facfe; background: #f0f7ff; }
+  button.opt:active { transform: scale(0.97); }
+  button.opt.correct { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+  button.opt.wrong { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+  button.opt.disabled { pointer-events: none; opacity: 0.7; }
+  .explanation {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    display: none;
+    text-align: left;
+    width: 100%;
+    max-width: 420px;
+  }
+  .explanation.show { display: block; animation: fadeIn 0.4s ease; }
+  .explanation.correct { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .explanation.wrong { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .footer {
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+  }
+  .btn-next {
+    padding: 12px 28px;
+    font-size: 1rem;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-next:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .topic-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #e2e8f0;
+    color: #475569;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .hidden { display: none !important; }
+  .result-badge {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: 700;
+  }
+  .badge-correct { background: #dcfce7; color: #166534; }
+  .badge-wrong { background: #fee2e2; color: #991b1b; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Flash Card Matematika SI</h1>
+    <p>BBK1CAB3 &mdash; Latihan soal acak dengan penjelasan</p>
+  </header>
+  <div class="stats">
+    <span>Skor: <span id="score">0</span></span>
+    <span>Soal: <span id="qcount">0</span></span>
+  </div>
+
+  <div class="flashcard" id="card">
+    <div class="topic-pill" id="topic">Topik</div>
+    <div class="question-text" id="question">Muat soal...</div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+
+  <div class="footer">
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Soal Berikutnya</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MATERI DATA & QUESTION GENERATORS
+   Based on BBK1CAB3 Matematika untuk Sistem Informasi
+   Weeks 1-6: bilangan real, selang, pertidaksamaan, nilai mutlak,
+   fungsi, limit, kekontinuan, turunan
+   ============================================================ */
+
+const TOPICS = [
+  'selang',
+  'pertidaksamaan',
+  'nilai-mutlak',
+  'fungsi',
+  'limit',
+  'kekontinuan',
+  'turunan'
+];
+
+let state = {
+  score: 0,
+  total: 0,
+  current: null,
+  answered: false,
+  history: []
+};
+
+const frac = (n,d) => `<span class="math">${n}</span><span style="font-size:0.75em;vertical-align:0.4em;">/</span><span class="math">${d}</span>`;
+const sub = (x,y) => `<span class="math">${x}</span><span style="font-size:0.7em;vertical-align:-0.4em;">${y}</span>`;
+
+// ---- helpers ----
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// question object: { topic, q, options:[{text,correct}], explanation }
+const generators = {
+
+  // ---------------- SELANG ----------------
+  selang: () => {
+    const kind = randInt(0,3);
+    if(kind===0){
+      const a = randInt(-5,5); const b = a + randInt(1,4);
+      const opts = [
+        {text:`(${a}, ${b})`, correct:true},
+        {text:`[${a}, ${b}]`, correct:false},
+        {text:`[${a}, ${b})`, correct:false},
+        {text:`(${a}, ${b}]`, correct:false}
+      ];
+      return {
+        topic:'Selang',
+        q:`Notasi selang untuk ${esc('<')}x${esc('<')}${b} dengan ${a}<x<${b} adalah:`,
+        options:shuffle(opts),
+        explanation:`Selang buka (${a}, ${b}) berarti ${a} < x < ${b}, di mana batas ${a} dan ${b} <b>tidak ikut</b> dalam himpunan penyelesaian. Simbol kurung ( ) menandakan batas buka.`
+      };
+    }
+    if(kind===1){
+      const a = randInt(0,4);
+      const opts=[
+        {text:`[${a}, ∞)`, correct:true},
+        {text:`(${a}, ∞)`, correct:false},
+        {text:`(−∞, ${a}]`, correct:false},
+        {text:`(−∞, ${a})`, correct:false}
+      ];
+      return {
+        topic:'Selang',
+        q:`Notasi selang untuk x ≥ ${a} adalah:`,
+        options:shuffle(opts),
+        explanation:`Selang [${a}, ∞) berarti x ≥ ${a}, batas ${a} <b>ikut</b> dalam himpunan (kurung siku [ ]) dan selang terbuka ke kanan hingga tak hingga (∞ selalu pakai kurung biasa).`
+      };
+    }
+    if(kind===2){
+      const a = randInt(-4,4);
+      const opts=[
+        {text:`(−∞, ${a})`, correct:true},
+        {text:`(−∞, ${a}]`, correct:false},
+        {text:`(${a}, ∞)`, correct:false},
+        {text:`[${a}, ∞)`, correct:false}
+      ];
+      return {
+        topic:'Selang',
+        q:`Notasi selang untuk x < ${a} adalah:`,
+        options:shuffle(opts),
+        explanation:`Selang (−∞, ${a}) berarti x < ${a}. Tak hingga −∞ <b>selalu</b> dipakai dengan kurung biasa ( ), karena tak hingga bukan bilangan.`
+      };
+    }
+    // kind 3: gabungan/irisan
+    return {
+      topic:'Selang',
+      q:'Jika A = (−∞, 1] dan B = (3, ∞), maka A ∪ B adalah:',
+      options:shuffle([
+        {text:'(−∞, 1] ∪ (3, ∞)', correct:true},
+        {text:'(−∞, 1] ∩ (3, ∞)', correct:false},
+        {text:'(1, 3)', correct:false},
+        {text:'[1, 3]', correct:false}
+      ]),
+      explanation:'Gabungan (∪) adalah semua anggota yang ada di A <b>atau</b> B. Karena A dan B tidak tumpang tindir, A ∪ B = (−∞, 1] ∪ (3, ∞).'
+    };
+  },
+
+  // ---------------- PERTIDAKSAMAAN ----------------
+  pertidaksamaan: () => {
+    const kind = randInt(0,3);
+    if(kind===0){
+      const a = randInt(1,6); const b = randInt(5,15); const c = randInt(1,8);
+      // ax + b < c  => x < (c-b)/a
+      const num = c - b; const den = a;
+      const g = gcd(Math.abs(num),den);
+      const n = num/g; const d = den/g;
+      const dir = n<0 ? '&lt;' : '&gt;';
+      const val = n<0 ? -n : n;
+      return {
+        topic:'Pertidaksamaan Linier',
+        q:`Selesaikan ${a}x + ${b} ${c<0? '&lt;' : '&gt;'} ${c}.`,
+        options:shuffle([
+          {text:`x ${dir} ${frac(n,d)}`, correct:true},
+          {text:`x ${dir === '&lt;'?'&gt;':'&lt;'} ${frac(n,d)}`, correct:false},
+          {text:`x = ${frac(n,d)}`, correct:false},
+          {text:`x ${dir} ${d}/${n}`, correct:false}
+        ]),
+        explanation:`Pindahkan ${b}: ${a}x ${c>b?'&gt;':'&lt;'}${c-b}. Bagi ${a} (positif, tanda tidak berbalik): x ${dir} ${val}/${d}.`
+      };
+    }
+    if(kind===1){
+      const p = randInt(2,6); const q = randInt(1,5);
+      // x^2 <= p^2  => -p <= x <= p
+      return {
+        topic:'Pertidaksamaan Kuadrat',
+        q:`Selesaikan x² ≤ ${p*p}.`,
+        options:shuffle([
+          {text:`[−${p}, ${p}]`, correct:true},
+          {text:`(−∞, −${p}) ∪ (${p}, ∞)`, correct:false},
+          {text:`(−${p}, ${p})`, correct:false},
+          {text:`x = ${p} atau x = −${p}`, correct:false}
+        ]),
+        explanation:`x² ≤ ${p*p} berarti x berada <b>di antara</b> −${p} dan ${p} (inklusif), karena parabola terbuka ke bawah di antara akar. HP = [−${p}, ${p}].`
+      };
+    }
+    if(kind===2){
+      const a = randInt(2,6); const b = randInt(1,5);
+      return {
+        topic:'Pertidaksamaan Rasional',
+        q:`Selesaikan ${a}/x ≥ 1 (x ≠ 0).`,
+        options:shuffle([
+          {text:`(0, ${a}]`, correct:true},
+          {text:`(−∞, 0) ∪ [${a}, ∞)`, correct:false},
+          {text:`[${a}, ∞)`, correct:false},
+          {text:`x ≥ ${a}`, correct:false}
+        ]),
+        explanation:`${a}/x − 1 ≥ 0 ⟹ (${a}−x)/x ≥ 0. Titik kritis x=0 (kosong) dan x=${a} (ikut). Uji selang: (0,${a}] memenuhi. HP = (0, ${a}].`
+      };
+    }
+    // rangkap
+    return {
+      topic:'Pertidaksamaan Rangkap',
+      q:'Selesaikan 1 &lt; 2x + 1 &lt; 5.',
+      options:shuffle([
+        {text:'(0, 2)', correct:true},
+        {text:'(−∞, 2)', correct:false},
+        {text:'(0, ∞)', correct:false},
+        {text:'x = 2', correct:false}
+      ]),
+      explanation:'Kurangi 1 dari ketiga ruas: 0 &lt; 2x &lt; 4. Bagi 2: 0 &lt; x &lt; 2. HP = (0, 2).'
+    };
+  },
+
+  // ---------------- NILAI MUTLAK ----------------
+  'nilai-mutlak': () => {
+    const kind = randInt(0,3);
+    if(kind===0){
+      const c = randInt(5,15); const a = randInt(2,8);
+      return {
+        topic:'Nilai Mutlak',
+        q:`Selesaikan |x − ${c}| ≤ ${a}.`,
+        options:shuffle([
+          {text:`[${c-a}, ${c+a}]`, correct:true},
+          {text:`(−∞, ${c-a}) ∪ (${c+a}, ∞)`, correct:false},
+          {text:`x = ${c}`, correct:false},
+          {text:`(${c-a}, ${c+a})`, correct:false}
+        ]),
+        explanation:`|x − c| ≤ a berarti jarak x ke c tidak lebih dari a. Maka c−a ≤ x ≤ c+a, yaitu [${c-a}, ${c+a}].`
+      };
+    }
+    if(kind===1){
+      const a = randInt(3,8);
+      return {
+        topic:'Nilai Mutlak',
+        q:`Selesaikan |x| &lt; ${a}.`,
+        options:shuffle([
+          {text:`(−${a}, ${a})`, correct:true},
+          {text:`x < −${a} atau x > ${a}`, correct:false},
+          {text:`x = ${a}`, correct:false},
+          {text:`Semua x`, correct:false}
+        ]),
+        explanation:`|x| &lt; ${a} berarti −${a} &lt; x &lt; ${a}, yaitu selang terbuka (−${a}, ${a}).`
+      };
+    }
+    if(kind===2){
+      const c = randInt(2,6); const a = randInt(2,5);
+      return {
+        topic:'Nilai Mutlak',
+        q:`Selesaikan |x − ${c}| &gt; ${a}.`,
+        options:shuffle([
+          {text:`x < ${c-a} atau x > ${c+a}`, correct:true},
+          {text:`${c-a} < x < ${c+a}`, correct:false},
+          {text:`x = ${c}`, correct:false},
+          {text:`Tidak ada solusi`, correct:false}
+        ]),
+        explanation:`|x − c| &gt; a berarti jarak x ke c lebih dari a. Maka x < c−a atau x > c+a, yaitu ke luar pita.`
+      };
+    }
+    return {
+      topic:'Nilai Mutlak',
+      q:'|x| &lt; −3 memiliki solusi:',
+      options:shuffle([
+        {text:'Tidak ada solusi', correct:true},
+        {text:'Semua x', correct:false},
+        {text:'x = −3', correct:false},
+        {text:'x = 3', correct:false}
+      ]),
+      explanation:'Nilai mutlak selalu ≥ 0, jadi |x| &lt; −3 (negatif) tidak pernah terpenuhi. Tidak ada solusi.'
+    };
+  },
+
+  // ---------------- FUNGSI ----------------
+  fungsi: () => {
+    const kind = randInt(0,3);
+    if(kind===0){
+      const a = randInt(1,5);
+      return {
+        topic:'Fungsi',
+        q:`Domain f(x) = √(x + ${a}) adalah:`,
+        options:shuffle([
+          {text:`[−${a}, ∞)`, correct:true},
+          {text:`(−∞, ${a}]`, correct:false},
+          {text:`Semua x`, correct:false},
+          {text:`x > ${a}`, correct:false}
+        ]),
+        explanation:`Untuk akar, yang di dalam akar ≥ 0: x + ${a} ≥ 0 ⟹ x ≥ −${a}. Domain = [−${a}, ∞).`
+      };
+    }
+    if(kind===1){
+      const m = randInt(1,5); const b = randInt(1,5);
+      return {
+        topic:'Fungsi',
+        q:`f(x) = ${m}x + ${b}. Nilai f(${b}) = ?`,
+        options:shuffle([
+          {text:`${m*b + b}`, correct:true},
+          {text:`${m*b}`, correct:false},
+          {text:`${b}`, correct:false},
+          {text:`0`, correct:false}
+        ]),
+        explanation:`f(${b}) = ${m}(${b}) + ${b} = ${m*b} + ${b} = ${m*b+b}.`
+      };
+    }
+    if(kind===2){
+      const p = randInt(-3,3); const q = randInt(1,4);
+      return {
+        topic:'Fungsi',
+        q:`f(x) = x² + ${p}x + ${q}. x-coordinate puncak adalah:`,
+        options:shuffle([
+          {text:`−${p}/2`, correct:true},
+          {text:`${p}/2`, correct:false},
+          {text:`−${p}`, correct:false},
+          {text:`${p}`, correct:false}
+        ]),
+        explanation:`x_puncak = −b/(2a) = −${p}/(2·1) = −${p}/2.`
+      };
+    }
+    return {
+      topic:'Fungsi',
+      q:'f(x) = x² adalah fungsi:',
+      options:shuffle([
+        {text:'Genap', correct:true},
+        {text:'Ganjil', correct:false},
+        {text:'Periodik', correct:false},
+        {text:'Linear', correct:false}
+      ]),
+      explanation:`f(−x) = (−x)² = x² = f(x), jadi genap dan simetri terhadap sumbu-y.`
+    };
+  },
+
+  // ---------------- LIMIT ----------------
+  limit: () => {
+    const kind = randInt(0,4);
+    if(kind===0){
+      const a = randInt(1,5);
+      return {
+        topic:'Limit',
+        q:`lim<sub>x→${a}</sub> (x² − ${a*a}) / (x − ${a}) = ?`,
+        options:shuffle([
+          {text:`${2*a}`, correct:true},
+          {text:`0`, correct:false},
+          {text:`1`, correct:false},
+          {text:`Tidak ada`, correct:false}
+        ]),
+        explanation:`Faktorkan: (x−${a})(x+${a})/(x−${a}) = x+${a}. Substitusi x=${a}: ${2*a}.`
+      };
+    }
+    if(kind===1){
+      const a = randInt(2,7); const b = randInt(2,7);
+      return {
+        topic:'Limit',
+        q:`lim<sub>x→∞</sub> (${a}x² + 3x + 1) / (${b}x² + 5) = ?`,
+        options:shuffle([
+          {text:`${a}/${b}`, correct:true},
+          {text:`0`, correct:false},
+          {text:`∞`, correct:false},
+          {text:`1`, correct:false}
+        ]),
+        explanation:`Derajat sama (2), limit = rasio koefisien tertinggi = ${a}/${b} ≈ ${(a/b).toFixed(2)}.`
+      };
+    }
+    if(kind===2){
+      return {
+        topic:'Limit',
+        q:`lim<sub>x→0</sub> sin(3x) / x = ?`,
+        options:shuffle([
+          {text:'3', correct:true},
+          {text:'1', correct:false},
+          {text:'0', correct:false},
+          {text:'∞', correct:false}
+        ]),
+        explanation:`lim sin(3x)/x = 3·lim sin(3x)/(3x) = 3·1 = 3.`
+      };
+    }
+    if(kind===3){
+      const n = randInt(1,4);
+      return {
+        topic:'Limit',
+        q:`lim<sub>x→0</sub> (1 − cos ${n}x) / x² = ?`,
+        options:shuffle([
+          {text:`${n*n}/2`, correct:true},
+          {text:`0`, correct:false},
+          {text:`1`, correct:false},
+          {text:`${n}`, correct:false}
+        ]),
+        explanation:`lim (1−cos(nx))/x² = n²/2 = ${n*n}/2 = ${n*n/2}.`
+      };
+    }
+    return {
+      topic:'Limit',
+      q:'lim<sub>x→0</sub> sin(x)/x = ?',
+      options:shuffle([
+        {text:'1', correct:true},
+        {text:'0', correct:false},
+        {text:'∞', correct:false},
+        {text:'Tidak ada', correct:false}
+      ]),
+      explanation:'Limit wajib trigonometri: lim<sub>x→0</sub> sin x/x = 1.'
+    };
+  },
+
+  // ---------------- KEKONTINUAN ----------------
+  kekontinuan: () => {
+    const kind = randInt(0,3);
+    if(kind===0){
+      return {
+        topic:'Kekontinuan',
+        q:'Jika f diferensiabel di x = a, maka f kontinu di x = a.',
+        options:shuffle([
+          {text:'True', correct:true},
+          {text:'False', correct:false}
+        ]),
+        explanation:'Teorema: diferensiabel ⇒ kontinu. Sebaliknya belum tentu (contoh f(x)=|x| kontinu di 0 tapi tidak diferensiabel).'
+      };
+    }
+    if(kind===1){
+      return {
+        topic:'Kekontinuan',
+        q:'Syarat kontinu di x = a yang sering dilupakan adalah:',
+        options:shuffle([
+          {text:'lim = f(a)', correct:true},
+          {text:'f(a) ada saja', correct:false},
+          {text:'Limit kiri ada saja', correct:false},
+          {text:'Grafik tidak putus saja', correct:false}
+        ]),
+        explanation:'Tiga syarat: f(a) ada, limit ada, dan limit = f(a). Syarat ke-3 (limit = nilai fungsi) paling sering dilupakan.'
+      };
+    }
+    return {
+      topic:'Kekontinuan',
+      q:'f(x) = |x| di x = 0 adalah:',
+      options:shuffle([
+        {text:'Kontinu tetapi tidak diferensiabel', correct:true},
+        {text:'Diferensiabel', correct:false},
+        {text:'Tidak kontinu', correct:false},
+        {text:'Tidak terdefinisi', correct:false}
+      ]),
+      explanation:'|x| kontinu di 0 (grafik tidak putus) tapi memiliki sudut lancip, sehingga f′(0) tidak ada.'
+    };
+  },
+
+  // ---------------- TURUNAN ----------------
+  turunan: () => {
+    const kind = randInt(0,4);
+    if(kind===0){
+      const n = randInt(2,5); const c = randInt(1,6);
+      return {
+        topic:'Turunan',
+        q:`f(x) = x<sup>${n}</sup>. f′(x) = ?`,
+        options:shuffle([
+          {text:`${n}x${sup(n-1)}`, correct:true},
+          {text:`x${sup(n-1)}`, correct:false},
+          {text:`${n}x${sup(n)}`, correct:false},
+          {text:`0`, correct:false}
+        ]),
+        explanation:`Aturan pangkat: d/dx(xⁿ) = n·xⁿ⁻¹. Jadi f′(x) = ${n}x<sup>${n-1}</sup>.`
+      };
+    }
+    if(kind===1){
+      const a = randInt(1,5); const b = randInt(1,5);
+      return {
+        topic:'Turunan',
+        q:`f(x) = ${a}x² + ${b}x. f′(x) = ?`,
+        options:shuffle([
+          {text:`${2*a}x + ${b}`, correct:true},
+          {text:`${a}x + ${b}`, correct:false},
+          {text:`2x + ${b}`, correct:false},
+          {text:`${2*a}x`, correct:false}
+        ]),
+        explanation:`f′(x) = 2·${a}x + ${b} = ${2*a}x + ${b}.`
+      };
+    }
+    if(kind===2){
+      return {
+        topic:'Turunan',
+        q:`f(x) = sin(x). f′(x) = ?`,
+        options:shuffle([
+          {text:'cos(x)', correct:true},
+          {text:'−sin(x)', correct:false},
+          {text:'cos²(x)', correct:false},
+          {text:'1', correct:false}
+        ]),
+        explanation:'Turunan sinus: d/dx(sin x) = cos x.'
+      };
+    }
+    if(kind===3){
+      return {
+        topic:'Turunan',
+        q:`f(x) = x³. f″(x) = ?`,
+        options:shuffle([
+          {text:'6x', correct:true},
+          {text:'3x²', correct:false},
+          {text:'6', correct:false},
+          {text:'0', correct:false}
+        ]),
+        explanation:`f′(x) = 3x², f″(x) = 6x.`
+      };
+    }
+    const a = randInt(1,6);
+    return {
+      topic:'Turunan',
+      q:`Gradien garis singgung kurva y = x² di titik x = ${a} adalah?`,
+      options:shuffle([
+        {text:`${2*a}`, correct:true},
+        {text:`${a*a}`, correct:false},
+        {text:`${a}`, correct:false},
+        {text:'0', correct:false}
+      ]),
+      explanation:`Gradien garis singgung m = f′(x) = 2x. Di x = ${a}: m = 2·${a} = ${2*a}.`
+    };
+  }
+};
+
+function gcd(a,b){ while(b){ let t=b; b=a%b; a=t; } return a; }
+const SUPS='⁰¹²³⁴⁵⁶⁷⁸⁹';
+function sup(n){ return String(n).split('').map(d=>SUPS[+d]).join(''); }
+
+// ============ RENDER ============
+function nextQuestion(){
+  state.answered = false;
+  // pick random topic
+  const topicKey = TOPICS[randInt(0, TOPICS.length-1)];
+  const gen = generators[topicKey];
+  state.current = gen();
+  state.current.topicKey = topicKey;
+  renderCard();
+}
+
+function renderCard(){
+  const q = state.current;
+  document.getElementById('topic').textContent = q.topic;
+  document.getElementById('question').innerHTML = q.q;
+  const optsEl = document.getElementById('options');
+  optsEl.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = opt.text;
+    btn.onclick = () => selectOption(i);
+    optsEl.appendChild(btn);
+  });
+  document.getElementById('explanation').classList.remove('show','correct','wrong');
+  document.getElementById('explanation').style.display='none';
+  document.getElementById('nextBtn').textContent = 'Soal Berikutnya';
+  document.getElementById('nextBtn').disabled = false;
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('qcount').textContent = state.total;
+}
+
+function selectOption(idx){
+  if(state.answered) return;
+  state.answered = true;
+  const q = state.current;
+  const isCorrect = q.options[idx].correct;
+  if(isCorrect){ state.score++; }
+  state.total++;
+  const btns = document.querySelectorAll('.opt');
+  btns.forEach((b,i)=>{
+    b.classList.add('disabled');
+    if(q.options[i].correct) b.classList.add('correct');
+    if(i===idx && !isCorrect) b.classList.add('wrong');
+  });
+  const expl = document.getElementById('explanation');
+  expl.innerHTML = `<strong>${isCorrect?'BENAR':'SALAH'}</strong> — ${q.explanation}`;
+  expl.className = 'explanation show ' + (isCorrect?'correct':'wrong');
+  expl.style.display = 'block';
+  document.getElementById('nextBtn').textContent = 'Soal Berikutnya';
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('qcount').textContent = state.total;
+}
+
+// init
+nextQuestion();
+</script>
+</body>
+</html>

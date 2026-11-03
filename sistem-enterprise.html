@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Card &amp; Quiz Sistem Enterprise</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .container {
+    max-width: 520px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  header h1 { font-size: 1.5rem; margin-bottom: 6px; letter-spacing: 0.5px; }
+  header p { font-size: 0.85rem; opacity: 0.9; }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    font-size: 0.85rem;
+    color: #555;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .stats span { font-weight: 600; color: #111; }
+  .flashcard {
+    min-height: 280px;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .topic-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #e2e8f0;
+    color: #475569;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .question-text {
+    font-size: 1.25rem;
+    color: #222;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    font-weight: 500;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  button.opt {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+    border: 2px solid #e2e8f0;
+    background: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  button.opt:hover { border-color: #4facfe; background: #f0f7ff; }
+  button.opt:active { transform: scale(0.97); }
+  button.opt.correct { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+  button.opt.wrong { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+  button.opt.disabled { pointer-events: none; opacity: 0.7; }
+  .explanation {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    display: none;
+    text-align: left;
+    width: 100%;
+    max-width: 440px;
+  }
+  .explanation.show { display: block; animation: fadeIn 0.4s ease; }
+  .explanation.correct { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .explanation.wrong { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .footer {
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+  }
+  .btn-next {
+    padding: 12px 28px;
+    font-size: 1rem;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-next:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .week-selector {
+    padding: 12px 20px;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  .week-selector select {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+  }
+  .btn-reset {
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-reset:hover { background: #cbd5e1; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="week-selector">
+    <select id="weekFilter" onchange="filterWeek()">
+      <option value="all">Semua Minggu (1-6)</option>
+      <option value="w1">Week 01 - Introduction to ERP</option>
+      <option value="w2">Week 02 - AI in ERP</option>
+      <option value="w3">Week 03 - SCM</option>
+      <option value="w4">Week 04 - CRM &amp; After Sales</option>
+      <option value="w5">Week 05 - Accounting &amp; Finance</option>
+      <option value="w6">Week 06 - HRM</option>
+    </select>
+  </div>
+  <header>
+    <h1>Flash Card Sistem Enterprise</h1>
+    <p>BBK1EAB3 &mdash; Latihan soal acak dengan penjelasan</p>
+  </header>
+  <div class="stats">
+    <span>Skor: <span id="score">0</span></span>
+    <span>Soal: <span id="qcount">0</span></span>
+  </div>
+
+  <div class="flashcard" id="card">
+    <div class="topic-pill" id="topic">Topik</div>
+    <div class="question-text" id="question">Muat soal...</div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+
+  <div class="footer">
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Soal Berikutnya</button>
+    <button class="btn-reset" onclick="resetScore()">Reset Skor</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SISTEM ENTERPRISE QUESTION DATA
+   Based on BBK1EAB3 - Sistem Enterprise (Weeks 1-6)
+   ============================================================ */
+
+const WEEKS = {
+  w1: 'Week 01 - Introduction to ERP',
+  w2: 'Week 02 - AI in ERP',
+  w3: 'Week 03 - SCM',
+  w4: 'Week 04 - CRM & After Sales',
+  w5: 'Week 05 - Accounting & Finance',
+  w6: 'Week 06 - HRM'
+};
+
+let state = {
+  score: 0,
+  total: 0,
+  current: null,
+  answered: false,
+  filter: 'all'
+};
+
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+// question: { week, topic, q, options:[{text,correct}], explanation }
+const Q = [];
+
+// ---------------- WEEK 1: Introduction to ERP ----------------
+Q.push(
+  {week:'w1',topic:'Business Function vs Process',q:'Business Function berorientasi pada:',options:shuffle([{text:'Keahlian departemen tunggal (structural)',correct:true},{text:'Alur kerja lintas fungsi (cross-functional)',correct:false},{text:'Pelanggan akhir saja',correct:false},{text:'Teknologi informasi saja',correct:false}]),explanation:'Business Function terkelompok menurut keahlian departemen (misal akunting, pemasaran, produksi) dengan orientasi struktural dalam satu unit departemen.'},
+  {week:'w1',topic:'Business Function vs Process',q:'Business Process berorientasi pada:',options:shuffle([{text:'Alur kerja end-to-end lintas departemen',correct:true},{text:'Keahlian satu departemen',correct:false},{text:'Hierarki struktural internal',correct:false},{text:'Tidak melibatkan pelanggan',correct:false}]),explanation:'Business Process adalah alur kerja terstruktur yang lintas fungsi/departemen untuk memberikan nilai pada pelanggan dari awal hingga akhir.'},
+  {week:'w1',topic:'ERP Definition',q:'ERP (Enterprise Resource Planning) adalah:',options:shuffle([{text:'Software inti untuk koordinasi informasi di seluruh area bisnis',correct:true},{text:'Software hanya untuk akunting',correct:false},{text:'Hardware server perusahaan',correct:false},{text:'Aplikasi mobile saja',correct:false}]),explanation:'ERP adalah perangkat lunak inti yang digunakan perusahaan untuk mengkoordinir informasi di setiap area bisnis dengan database terpusat.'},
+  {week:'w1',topic:'ERP Definition',q:'Keuntungan utama database terpusat dalam ERP adalah:',options:shuffle([{text:'Sumber data yang sama (single source of truth)',correct:true},{text:'Banyak database terpisah',correct:false},{text:'Data hanya di satu departemen',correct:false},{text:'Tidak ada audit trail',correct:false}]),explanation:'Database terpusat menyediakan satu sumber kebenaran data untuk seluruh organisasi, menghindari penyimpanan data terpisah yang berbeda-beda.'},
+  {week:'w1',topic:'Silo Information System',q:'Silo Information System adalah:',options:shuffle([{text:'Kumpulan sistem terpisah yang tidak terintegrasi',correct:true},{text:'Sistem yang terintegrasi penuh',correct:false},{text:'Salah satu modul ERP',correct:false},{text:'Database tunggal',correct:false}]),explanation:'Silo Information System timbul dari sistem independen yang tidak terintegrasi, menciptakan kendala dan mengganggu produktivitas.'},
+  {week:'w1',topic:'IS Phase',q:'Tiga fase Information System adalah:',options:shuffle([{text:'Input, Process, Output',correct:true},{text:'Input, Store, Delete',correct:false},{text:'Plan, Do, Check',correct:false},{text:'Sales, Production, Finance',correct:false}]),explanation:'Information System bekerja melalui siklus Input (data mentah), Process (pengolahan dengan proses bisnis), dan Output (informasi dan laporan).'},
+  {week:'w1',topic:'ERP Modules',q:'Empat area fungsi yang diintegrasi ERP menurut slide adalah:',options:shuffle([{text:'Pabrik, gudang, penjualan, pelaporan eksekutif',correct:true},{text:'Hanya akunting',correct:false},{text:'Hanya HR',correct:false},{text:'Hanya pemasaran',correct:false}]),explanation:'ERP menghubungkan berbagai departemen dari pabrik, gudang, penjualan hingga pelaporan eksekutif secara real-time.'},
+  {week:'w1',topic:'ERP vs IS',q:'ERP & Information System terdiri dari elemen:',options:shuffle([{text:'Hardware, Software, Information System, People, Business Process, IT',correct:true},{text:'Hanya Hardware dan Software',correct:false},{text:'Hanya People dan Process',correct:false},{text:'Hanya Database',correct:false}]),explanation:'Information System terdiri dari 6 elemen: Hardware, Software, Information System, People, Business Process, dan Information Technology.'}
+);
+
+// ---------------- WEEK 2: AI in ERP ----------------
+Q.push(
+  {week:'w2',topic:'AI Maturity Level',q:'AI Maturity Level 1 adalah:',options:shuffle([{text:'Rule-based Automation (IF-THEN, workflow)',correct:true},{text:'Generative AI',correct:false},{text:'Adaptive / Agentic',correct:false},{text:'Predictive Forecast',correct:false}]),explanation:'Level 1 adalah Rule-based Automation dengan IF-THEN dan workflow sederhana.'},
+  {week:'w2',topic:'AI Maturity Level',q:'AI Maturity Level 4 adalah:',options:shuffle([{text:'Adaptive / Agentic (multi-step action dengan guardrails)',correct:true},{text:'Rule-based Automation',correct:false},{text:'Generative AI',correct:false},{text:'Predictive Forecast',correct:false}]),explanation:'Level 4 adalah Adaptive/Agentic dengan tindakan multi-step yang dilengkapi guardrails dan oversight manusia.'},
+  {week:'w2',topic:'Human-in-the-Loop',q:'Posisi AI dalam proses berisiko tinggi menurut konsep Human-in-the-Loop adalah:',options:shuffle([{text:'Decision support (pendukung keputusan), bukan pengganti',correct:true},{text:'Diganti sepenuhnya oleh AI',correct:false},{text:'Tidak perlu audit trail',correct:false},{text:'Keputusan otomatis tanpa verifikasi',correct:false}]),explanation:'AI sebaiknya diposisikan sebagai decision support, bukan pengganti accountability manusia, dengan approval, escalation, logging, audit trail, dan fallback.'},
+  {week:'w2',topic:'AI Risks',q:'Hallucination dalam AI adalah:',options:shuffle([{text:'Jawaban terdengar benar tetapi tidak didukung data',correct:true},{text:'Data yang akurat',correct:false},{text:'Sistem yang aman',correct:false},{text:'Akses yang terbatas',correct:false}]),explanation:'Hallucination adalah ketika AI memberikan jawaban yang terdengar benar namun tidak didukung oleh data yang ada.'},
+  {week:'w2',topic:'Enterprise Types',q:'Static Enterprise karakteristiknya:',options:shuffle([{text:'Plan → Execute → Record (lingkungan stabil)',correct:true},{text:'Sense → Learn → Predict → Decide → Act',correct:false},{text:'Sangat dinamis dan tidak pasti',correct:false},{text:'AI menjadi bagian penting',correct:false}]),explanation:'Static Enterprise adalah perusahaan tradisional dengan lingkungan relatif stabil dan ERP sebagai system of record.'},
+  {week:'w2',topic:'Enterprise Types',q:'Adaptive Enterprise karakteristiknya:',options:shuffle([{text:'Sense → Learn → Predict → Decide → Act → Learn Again',correct:true},{text:'Plan → Execute → Record',correct:false},{text:'Lingkungan relatif stabil',correct:false},{text:'AI minimal/tidak ada',correct:false}]),explanation:'Adaptive Enterprise (misal Netflix) menggunakan data dan AI untuk mempelajari perilaku pengguna dan mengantisipasi kebutuhan mereka.'},
+  {week:'w2',topic:'Intelligent ERP Levels',q:'Tingkat Intelligent ERP yang memprediksi "apa yang mungkin terjadi":',options:shuffle([{text:'Predictive',correct:true},{text:'Transactional',correct:false},{text:'Analytical',correct:false},{text:'Prescriptive/Generative',correct:false}]),explanation:'Predictive level memperkirakan apa yang mungkin terjadi (demand forecast, cash flow, churn, risk).'},
+  {week:'w2',topic:'AI Use Case Finance',q:'Anomaly detection dalam AI Finance berfungsi untuk:',options:shuffle([{text:'Menandai transaksi yang menyimpang dari pola normal',correct:true},{text:'Otomatis menyatakan fraud',correct:false},{text:'Menghapus semua invoice',correct:false},{text:'Mengganti staf akuntansi',correct:false}]),explanation:'Anomaly adalah sinyal yang perlu diperiksa, bukan otomatis berarti fraud. Human review tetap penting.'}
+);
+
+// ---------------- WEEK 3: SCM ----------------
+Q.push(
+  {week:'w3',topic:'BOM',q:'Jika 1 sepeda membutuhkan 2 roda, pesanan 100 sepeda membutuhkan berapa roda?',options:shuffle([{text:'200 roda',correct:true},{text:'100 roda',correct:false},{text:'50 roda',correct:false},{text:'400 roda',correct:false}]),explanation:'BOM (Bill of Materials) menentukan komponen yang diperlukan. 100 sepeda × 2 roda = 200 roda.'},
+  {week:'w3',topic:'ERP-SCM Relation',q:'Hubungan ERP dan SCM:',options:shuffle([{text:'ERP menyediakan data foundation, SCM mengelola proses supply chain',correct:true},{text:'ERP dan SCM hal yang sama',correct:false},{text:'SCM hanya untuk keuangan',correct:false},{text:'ERP tidak terhubung dengan SCM',correct:false}]),explanation:'ERP menyediakan foundation data/transaksi perusahaan; modul SCM mengelola proses supply chain yang terhubung dengan fungsi lain.'},
+  {week:'w3',topic:'SCM Modules',q:'Modul ERP yang terkait SCM meliputi:',options:shuffle([{text:'Procurement, Inventory, Manufacturing, Warehouse, Sales & Distribution',correct:true},{text:'Hanya Akunting',correct:false},{text:'Hanya HR',correct:false},{text:'Hanya Pemasaran',correct:false}]),explanation:'Modul SCM dalam ERP meliputi Procurement (PR, RFQ, PO), Inventory, Manufacturing (BOM, routing, MRP), Warehouse, Sales & Distribution.'},
+  {week:'w3',topic:'Supply Chain Flows',q:'Empat aliran utama dalam supply chain:',options:shuffle([{text:'Material/Product, Information, Financial/Cash, Return/Reverse',correct:true},{text:'Hanya Material',correct:false},{text:'Hanya Information dan Financial',correct:false},{text:'Hanya Return flow',correct:false}]),explanation:'Empat aliran utama: Material/Product, Information, Financial/Cash, dan Return/Reverse flow.'},
+  {week:'w3',topic:'Production Concepts',q:'MRP (Material Requirements Planning) berfungsi untuk:',options:shuffle([{text:'Menghitung kebutuhan material berdasarkan demand, inventory, BOM, dan lead time',correct:true},{text:'Mengelola karyawan',correct:false},{text:'Mengelola pemasaran',correct:false},{text:'Mengelola keuangan saja',correct:false}]),explanation:'MRP menghitung kebutuhan material berdasarkan permintaan, inventory yang ada, BOM, dan lead time.'},
+  {week:'w3',topic:'SCM Definition',q:'Supply Chain Management (SCM) adalah:',options:shuffle([{text:'Pengelolaan dan koordinasi barang/jasa, informasi, dan aktivitas dari supplier ke pelanggan',correct:true},{text:'Hanya logistik pengiriman',correct:false},{text:'Hanya produksi pabrik',correct:false},{text:'Hanya penjualan eceran',correct:false}]),explanation:'SCM adalah manajemen dan koordinasi barang/jasa, informasi, dan aktivitas dari supplier hingga pelanggan untuk memenuhi demand secara efektif.'}
+);
+
+// ---------------- WEEK 4: CRM & After Sales ----------------
+Q.push(
+  {week:'w4',topic:'CRM Definition',q:'Customer Relationship Management (CRM) adalah:',options:shuffle([{text:'Mengelola hubungan pelanggan secara menyeluruh di setiap titik sentuhan',correct:true},{text:'Hanya aplikasi penjualan',correct:false},{text:'Hanya sistem akunting',correct:false},{text:'Hanya gudang',correct:false}]),explanation:'CRM mengelola seluruh cakupan hubungan pelanggan dengan tujuan memberikan satu pandangan lengkap tentang setiap pelanggan.'},
+  {week:'w4',topic:'CRM Components',q:'Komponen utama CRM meliputi:',options:shuffle([{text:'Marketing, Sales Force Automation (SFA), Customer Service',correct:true},{text:'Hanya gudang',correct:false},{text:'Hanya akunting',correct:false},{text:'Hanya HR',correct:false}]),explanation:'CRM terdiri dari modul Marketing, SFA, dan Customer Service.'},
+  {week:'w4',topic:'Targeted Marketing',q:'Targeted Marketing adalah:',options:shuffle([{text:'Promosi ke orang yang paling mungkin membeli menggunakan data demografi',correct:true},{text:'Promosi ke semua orang secara acak',correct:false},{text:'Iklan televisi saja',correct:false},{text:'Tanpa menggunakan data',correct:false}]),explanation:'Targeted Marketing menggunakan DBMS untuk mengurutkan dan mengkategorikan konsumen berdasarkan usia, jenis kelamin, pendapatan, pembelian sebelumnya, dll.'},
+  {week:'w4',topic:'After Sales',q:'After Sales Service menurut Philip Kotler (2002) adalah:',options:shuffle([{text:'Layanan yang diberikan perusahaan kepada pelanggan setelah penjualan',correct:true},{text:'Layanan sebelum pembelian',correct:false},{text:'Hanya garansi',correct:false},{text:'Hanya pengiriman',correct:false}]),explanation:'After-sales service adalah layanan yang diberikan oleh perusahaan kepada pelanggan setelah penjualan (Kotler, 2002).'},
+  {week:'w4',topic:'CRM Objectives',q:'Dua tujuan utama CRM:',options:shuffle([{text:'Satu pandangan lengkap pelanggan dan satu pandangan lengkap perusahaan',correct:true},{text:'Hanya meningkatkan penjualan',correct:false},{text:'Hanya mengurangi biaya',correct:false},{text:'Hanya mengganti karyawan dengan AI',correct:false}]),explanation:'CRM bertujuan memberikan satu pandangan lengkap setiap pelanggan di setiap titik sentuhan, dan satu pandangan lengkap perusahaan kepada pelanggan.'}
+);
+
+// ---------------- WEEK 5: Accounting & Finance ----------------
+Q.push(
+  {week:'w5',topic:'Financial Statements',q:'Tiga laporan keuangan utama:',options:shuffle([{text:'Balance Sheet, Income Statement, Cash Flow Statement',correct:true},{text:'Hanya Balance Sheet',correct:false},{text:'Hanya Income Statement',correct:false},{text:'Hanya Cash Flow',correct:false}]),explanation:'Tiga laporan keuangan utama adalah Neraca (Balance Sheet), Laba Rugi (Income Statement), dan Cash Flow Statement.'},
+  {week:'w5',topic:'Accounting Equation',q:'Persamaan akuntansi:',options:shuffle([{text:'ASSETS = LIABILITIES + EQUITY',correct:true},{text:'ASSETS = LIABILITIES - EQUITY',correct:false},{text:'REVENUE = EXPENSES + PROFIT',correct:false},{text:'CASH = ASSETS + LIABILITIES',correct:false}]),explanation:'Persamaan dasar akuntansi: Aset = Kewajiban + Modal (ASSETS = LIABILITIES + EQUITY).'},
+  {week:'w5',topic:'Debit Credit',q:'Aset bertambah pada sisi:',options:shuffle([{text:'Debit',correct:true},{text:'Credit',correct:false},{text:'Keduanya sama',correct:false},{text:'Tidak bertambah',correct:false}]),explanation:'Pada akun Aset, penambahan dicatat di sisi Debit, sedangkan kewajiban dan modal bertambah di sisi Credit.'},
+  {week:'w5',topic:'ERP Finance Modules',q:'Komponen ERP Finance meliputi:',options:shuffle([{text:'GL, AP, AR, Asset Accounting, Cash & Bank, Cost Accounting',correct:true},{text:'Hanya GL',correct:false},{text:'Hanya AP',correct:false},{text:'Hanya AR',correct:false}]),explanation:'Komponen ERP Finance: General Ledger, Accounts Payable, Accounts Receivable, Asset Accounting, Cash & Bank, dan Controlling/Cost Accounting.'},
+  {week:'w5',topic:'Order-to-Cash',q:'Alur Order-to-Cash:',options:shuffle([{text:'Customer Order → Delivery → Invoice → AR → Payment → GL',correct:true},{text:'Hanya Customer Order',correct:false},{text:'Hanya Payment',correct:false},{text:'Tidak ada alur',correct:false}]),explanation:'Sales membuat order → delivery menghasilkan gerakan barang → invoice membuat receivable → payment membuat cash → posting terintegrasi ke GL.'}
+);
+
+// ---------------- WEEK 6: HRM ----------------
+Q.push(
+  {week:'w6',topic:'HRIS Definition',q:'HRIS (Human Resources Information System) adalah:',options:shuffle([{text:'Sistem komputer untuk mengolah informasi sumber daya manusia',correct:true},{text:'Sistem akunting',correct:false},{text:'Sistem pemasaran',correct:false},{text:'Sistem gudang',correct:false}]),explanation:'HRIS adalah sistem komputer untuk mengakuisisi, menyimpan, memanipulasi, menganalisis, mengambil, dan mendistribusikan informasi HR.'},
+  {week:'w6',topic:'HRIS Benefits',q:'Manfaat HRIS:',options:shuffle([{text:'Mendukung pengambilan keputusan strategis dan menghindari hukum',correct:true},{text:'Hanya untuk gaji',correct:false},{text:'Hanya untuk absensi',correct:false},{text:'Tidak ada manfaat',correct:false}]),explanation:'HRIS dapat mendukung pengambilan keputusan strategis, membantu menghindari hukum, menyediakan data untuk evaluasi program, dan mendukung keputusan HR sehari-hari.'},
+  {week:'w6',topic:'Human Capital',q:'Human Capital adalah:',options:shuffle([{text:'Karyawan dalam hal pelatihan, pengalaman, penilaian yang menambah nilai ekonomi',correct:true},{text:'Hanya uang perusahaan',correct:false},{text:'Hanya gedung kantor',correct:false},{text:'Hanya mesin',correct:false}]),explanation:'Human Capital adalah karyawan organisasi dalam hal pelatihan, pengalaman, penilaian, hubungan, dan wawasan yang dapat menambah nilai ekonomi.'},
+  {week:'w6',topic:'HR Responsibilities',q:'Tanggung jawab HR Department (Administrative services):',options:shuffle([{text:'Menangani tugas administrasi seperti perekrutan dan pertanyaan manfaat',correct:true},{text:'Hanya pengajaran di kelas',correct:false},{text:'Hanya akunting',correct:false},{text:'Hanya pemasaran',correct:false}]),explanation:'Administrative services melibatkan penanganan tugas administrasi (misal mempekerjakan karyawan dan menjawab pertanyaan manfaat) secara efisien.'},
+  {week:'w6',topic:'HR Responsibilities',q:'Job Analysis adalah:',options:shuffle([{text:'Proses mendapatkan informasi rinci tentang pekerjaan',correct:true},{text:'Proses menggaji karyawan',correct:false},{text:'Proses mempekerjakan karyawan',correct:false},{text:'Proses memphat karyawan',correct:false}]),explanation:'Job analysis adalah proses mendapatkan informasi rinci tentang pekerjaan; job design adalah proses mendefinisikan cara kerja dilakukan.'}
+);
+
+// ============ RENDER ============
+function filterWeek(){
+  state.filter = document.getElementById('weekFilter').value;
+  state.score = 0;
+  state.total = 0;
+  document.getElementById('score').textContent = '0';
+  document.getElementById('qcount').textContent = '0';
+  nextQuestion();
+}
+
+function getFiltered(){
+  if(state.filter==='all') return Q;
+  return Q.filter(q=>q.week===state.filter);
+}
+
+function nextQuestion(){
+  state.answered = false;
+  const pool = getFiltered();
+  if(pool.length===0){
+    document.getElementById('question').textContent = 'Tidak ada soal untuk minggu ini.';
+    document.getElementById('options').innerHTML = '';
+    document.getElementById('explanation').style.display='none';
+    document.getElementById('nextBtn').disabled = true;
+    return;
+  }
+  state.current = pool[randInt(0, pool.length-1)];
+  renderCard();
+}
+
+function renderCard(){
+  const q = state.current;
+  document.getElementById('topic').textContent = q.topic + ' (' + WEEKS[q.week] + ')';
+  document.getElementById('question').innerHTML = q.q;
+  const optsEl = document.getElementById('options');
+  optsEl.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = opt.text;
+    btn.onclick = () => selectOption(i);
+    optsEl.appendChild(btn);
+  });
+  document.getElementById('explanation').classList.remove('show','correct','wrong');
+  document.getElementById('explanation').style.display='none';
+  document.getElementById('nextBtn').textContent = 'Soal Berikutnya';
+  document.getElementById('nextBtn').disabled = false;
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('qcount').textContent = state.total;
+}
+
+function selectOption(idx){
+  if(state.answered) return;
+  state.answered = true;
+  const q = state.current;
+  const isCorrect = q.options[idx].correct;
+  if(isCorrect){ state.score++; }
+  state.total++;
+  const btns = document.querySelectorAll('.opt');
+  btns.forEach((b,i)=>{
+    b.classList.add('disabled');
+    if(q.options[i].correct) b.classList.add('correct');
+    if(i===idx && !isCorrect) b.classList.add('wrong');
+  });
+  const expl = document.getElementById('explanation');
+  expl.innerHTML = `<strong>${isCorrect?'✓ BENAR':'✗ SALAH'}</strong> — ${q.explanation}`;
+  expl.className = 'explanation show ' + (isCorrect?'correct':'wrong');
+  expl.style.display = 'block';
+  document.getElementById('nextBtn').textContent = 'Soal Berikutnya';
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('qcount').textContent = state.total;
+}
+
+function resetScore(){
+  state.score = 0;
+  state.total = 0;
+  document.getElementById('score').textContent = '0';
+  document.getElementById('qcount').textContent = '0';
+  nextQuestion();
+}
+
+// init
+nextQuestion();
+</script>
+</body>
+</html>
